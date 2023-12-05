@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.7.34
+* Android Compatibility ✅
+
 ## 0.7.33
 * IOS Compatibility ✅
 

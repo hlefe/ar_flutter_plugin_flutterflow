@@ -1,4 +1,4 @@
-group 'io.carius.lars.ar_flutter_plugin_flutterflow'
+group 'io.carius.lars.ar_flutter_plugin'
 version '1.0-SNAPSHOT'
 
 buildscript {
@@ -31,7 +31,7 @@ android {
         main.java.srcDirs += 'src/main/kotlin'
     }
     defaultConfig {
-        minSdkVersion 24
+        minSdkVersion 21
     }
 }
 
