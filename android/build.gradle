@@ -1,4 +1,4 @@
-group 'io.carius.lars.ar_flutter_plugin'
+group 'io.carius.lars.ar_flutter_plugin_flutterflow'
 version '1.0-SNAPSHOT'
 
 buildscript {

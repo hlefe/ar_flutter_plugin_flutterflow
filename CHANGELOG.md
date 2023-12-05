@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.7.37
+* Resolve package name on android
+* Add iOS permissions error issue to description
+
 ## 0.7.36
 * Update plugin description with geoflutter2 suggestion
 

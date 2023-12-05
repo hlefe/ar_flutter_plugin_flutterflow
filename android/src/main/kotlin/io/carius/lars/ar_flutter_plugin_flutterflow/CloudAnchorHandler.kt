@@ -1,4 +1,4 @@
-package io.carius.lars.ar_flutter_plugin
+package io.carius.lars.ar_flutter_plugin_flutterflow
 
 import com.google.ar.core.Anchor
 import com.google.ar.core.Anchor.CloudAnchorState
