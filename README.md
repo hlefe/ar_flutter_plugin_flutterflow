@@ -16,6 +16,9 @@ Original Functionality Retained: All the original capabilities of the AR Flutter
 
 For details on how to use the plugin and its functionalities, please refer to the original documentation at https://pub.dev/packages/ar_flutter_plugin.
 
+⚠️ If you're utilizing examples from the original plugin that involve the geoflutterfire package, please note that you'll need to use the geoflutterfire2 plugin instead, available at https://pub.dev/packages/geoflutterfire2.
+Also, remember to replace 'Geoflutterfire()' with 'GeoFlutterFire()' in your code to ensure proper functionality with this updated package.
+
 ### Installing
 
 Add the Flutter package to your project by running:

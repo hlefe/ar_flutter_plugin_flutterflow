@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.7.36
+* Update plugin description with geoflutter2 suggestion
+
 ## 0.7.35
 * Update plugin description
 
