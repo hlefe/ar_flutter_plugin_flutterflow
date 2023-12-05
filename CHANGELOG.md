@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.7.35
+* Update plugin description
+
 ## 0.7.34
 * Android Compatibility ✅
 
