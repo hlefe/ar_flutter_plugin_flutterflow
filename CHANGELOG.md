@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.7.38
+* Updated the iOS ARCore 1.33 cloud anchor endpoint from dearcorecloudanchor.googleapis.com to arcore.googleapis.com. 
+* This change is in response to the deprecation of the older ARCore Cloud Anchor API cloud endpoint. 
+* The previous endpoint will no longer be supported after August 31, 2023, necessitating this update to ensure continued functionality and support for cloud anchors in iOS applications.
+* https://developers.google.com/ar/develop/cloud-anchors/endpoint-changes?hl=fr
+
 ## 0.7.37
 * Resolve package name on android
 * Add iOS permissions error issue to description
