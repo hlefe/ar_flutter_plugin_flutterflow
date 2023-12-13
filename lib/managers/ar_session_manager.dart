@@ -11,6 +11,7 @@ import 'package:vector_math/vector_math_64.dart';
 
 // Type definitions to enforce a consistent use of the API
 typedef ARHitResultHandler = void Function(List<ARHitTestResult> hits);
+typedef ErrorHandler = void Function(String error);
 
 /// Manages the session configuration, parameters and events of an [ARView]
 class ARSessionManager {
@@ -28,6 +29,9 @@ class ARSessionManager {
 
   /// Receives hit results from user taps with tracked planes or feature points
   late ARHitResultHandler onPlaneOrPointTap;
+
+  /// Callback that is triggered once error is triggered
+  ErrorHandler? onError;
 
   ARSessionManager(int id, this.buildContext, this.planeDetectionConfig,
       {this.debug = false}) {
@@ -111,8 +115,16 @@ class ARSessionManager {
       switch (call.method) {
         case 'onError':
           if (onError != null) {
-            onError(call.arguments[0]);
+            onError!(call.arguments[0]);
             print(call.arguments);
+          }
+          else{
+            ScaffoldMessenger.of(buildContext).showSnackBar(SnackBar(
+                content: Text(call.arguments[0]),
+                action: SnackBarAction(
+                    label: 'HIDE',
+                    onPressed:
+                    ScaffoldMessenger.of(buildContext).hideCurrentSnackBar)));
           }
           break;
         case 'onPlaneOrPointTap':
@@ -168,15 +180,6 @@ class ARSessionManager {
     });
   }
 
-  /// Displays the [errorMessage] in a snackbar of the parent widget
-  onError(String errorMessage) {
-    ScaffoldMessenger.of(buildContext).showSnackBar(SnackBar(
-        content: Text(errorMessage),
-        action: SnackBarAction(
-            label: 'HIDE',
-            onPressed:
-                ScaffoldMessenger.of(buildContext).hideCurrentSnackBar)));
-  }
 
   /// Dispose the AR view on the platforms to pause the scenes and disconnect the platform handlers.
   /// You should call this before removing the AR view to prevent out of memory erros

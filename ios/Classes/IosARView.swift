@@ -197,7 +197,7 @@ class IosARView: NSObject, FlutterPlatformView, ARSCNViewDelegate, UIGestureReco
                         
                         arcoreMode = true
                     } else {
-                        sessionManagerChannel.invokeMethod("onError", arguments: ["Error generating JWT, have you added cloudAnchorKey.json into the example/ios/Runner directory?"])
+                        sessionManagerChannel.invokeMethod("onError", arguments: ["Error generating JWT, have you added cloudAnchorKey.json into the ios/Runner directory ?"])
                     }
                 } else {
                     sessionManagerChannel.invokeMethod("onError", arguments: ["Error initializing Google AR Session"])
