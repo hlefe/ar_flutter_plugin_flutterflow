@@ -1,6 +1,6 @@
 name: ar_flutter_plugin_flutterflow
 description: This plugin is a fork of the original AR Flutter Plugin, updated solely to modify the gradle parameters for compatibility with FlutterFlow.
-version: 0.7.39
+version: 0.7.41
 repository: https://github.com/hlefe/ar_flutter_plugin_flutterflow
 
 environment:
@@ -13,7 +13,7 @@ dependencies:
   permission_handler: ^10.1.0
   vector_math: ^2.1.1
   json_annotation: ^4.5.0
-  geolocator: ^9.0.0
+  geolocator: ^10.0.1
 
 dev_dependencies:
   flutter_test:
