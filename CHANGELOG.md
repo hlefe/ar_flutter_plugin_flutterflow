@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.7.43
+* Error in description
+
 ## 0.7.42
 * Update description of the plugin
 
