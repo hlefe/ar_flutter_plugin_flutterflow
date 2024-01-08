@@ -1,12 +1,13 @@
 # Changelog
 
+## 0.7.42
+* Update description of the plugin
+
 ## 0.7.41
-* Android : updated to com.google.ar:core:1.33.0 
-*
+* Android : updated to com.google.ar:core:1.33.0
 
 ## 0.7.40
 * Updated to Geolocator 10.0.1
-*
 
 ## 0.7.39
 * Updated Error text when cloudAnchorKey.json not added in ios/Runner
