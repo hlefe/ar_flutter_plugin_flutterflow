@@ -90,6 +90,8 @@ internal class AndroidARView(
 
     private lateinit var sceneUpdateListener: com.google.ar.sceneform.Scene.OnUpdateListener
     private lateinit var onNodeTapListener: com.google.ar.sceneform.Scene.OnPeekTouchListener
+    private var detectedPlanes = HashSet<Plane>()
+    private var planeCount = 0
 
     // Method channel handlers
     private val onSessionMethodCall =
@@ -602,6 +604,14 @@ internal class AndroidARView(
     }
 
     private fun onFrame(frameTime: FrameTime) {
+        if (arSceneView.arFrame != null){
+        for (plane in arSceneView.arFrame!!.getUpdatedTrackables(Plane::class.java)) {
+            if (plane.trackingState == TrackingState.TRACKING && !detectedPlanes.contains(plane)) {
+                detectedPlanes.add(plane)
+                planeCount++
+                sessionManagerChannel.invokeMethod("onPlaneDetected", planeCount)
+            }
+        }}
         // hide instructions view if no longer required
         if (showAnimatedGuide && arSceneView.arFrame != null){
             for (plane in arSceneView.arFrame!!.getUpdatedTrackables(Plane::class.java)) {

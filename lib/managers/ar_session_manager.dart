@@ -11,6 +11,7 @@ import 'package:vector_math/vector_math_64.dart';
 
 // Type definitions to enforce a consistent use of the API
 typedef ARHitResultHandler = void Function(List<ARHitTestResult> hits);
+typedef ARPlaneResultHandler = void Function(int planeCount);
 typedef ErrorHandler = void Function(String error);
 
 /// Manages the session configuration, parameters and events of an [ARView]
@@ -29,6 +30,9 @@ class ARSessionManager {
 
   /// Receives hit results from user taps with tracked planes or feature points
   late ARHitResultHandler onPlaneOrPointTap;
+
+  /// Receives total number of Planes when a plane is detected and added to the view
+  late ARPlaneResultHandler onPlaneDetected;
 
   /// Callback that is triggered once error is triggered
   ErrorHandler? onError;
@@ -138,6 +142,12 @@ class ARSessionManager {
               return ARHitTestResult.fromJson(e);
             }).toList();
             onPlaneOrPointTap(hitTestResults);
+          }
+          break;
+        case 'onPlaneDetected':
+          if (onPlaneDetected != null) {
+            final planeCountResult = call.arguments as int;
+            onPlaneDetected(planeCountResult);
           }
           break;
         case 'dispose':

@@ -37,7 +37,7 @@ Or manually add this to your `pubspec.yaml` file (and run `flutter pub get`):
 
 ```yaml
 dependencies:
-  ar_flutter_plugin_flutterflow: ^0.7.43
+  ar_flutter_plugin_flutterflow: ^0.7.44
 ```
 
 ### Importing

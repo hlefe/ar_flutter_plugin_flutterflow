@@ -12,6 +12,7 @@ class IosARView: NSObject, FlutterPlatformView, ARSCNViewDelegate, UIGestureReco
     let objectManagerChannel: FlutterMethodChannel
     let anchorManagerChannel: FlutterMethodChannel
     var showPlanes = false
+    var planeCount = 0
     var customPlaneTexturePath: String? = nil
     private var trackedPlanes = [UUID: (SCNNode, SCNNode)]()
     let modelBuilder = ArModelBuilder()
@@ -346,6 +347,8 @@ class IosARView: NSObject, FlutterPlatformView, ARSCNViewDelegate, UIGestureReco
         if let planeAnchor = anchor as? ARPlaneAnchor{
             let plane = modelBuilder.makePlane(anchor: planeAnchor, flutterAssetFile: customPlaneTexturePath)
             trackedPlanes[anchor.identifier] = (node, plane)
+            planeCount += 1
+            self.sessionManagerChannel.invokeMethod("onPlaneDetected", arguments: planeCount)
             if (showPlanes) {
                 node.addChildNode(plane)
             }
