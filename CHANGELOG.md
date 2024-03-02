@@ -1,4 +1,6 @@
 # Changelog
+## 0.7.45
+* Add diableCamera and enableCamera to ARSessionManager to allow the user to disable and enable the camera (only for Android).
 
 ## 0.7.44
 * Add onPlaneDetected to ARSessionManager with the total number of detected flat surfaces as a parameter, thus allowing to track the correct mapping of the space by the user.

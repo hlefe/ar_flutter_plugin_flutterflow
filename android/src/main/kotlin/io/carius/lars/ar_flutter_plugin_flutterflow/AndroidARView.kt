@@ -283,6 +283,12 @@ internal class AndroidARView(
                                 cloudAnchorHandler.resolveCloudAnchor(anchorId, cloudAnchorDownloadedListener())
                             }
                         }
+                        "disableCamera" -> {
+                            arSceneView.setVisibility(View.GONE);
+                        }
+                        "enableCamera" -> {
+                            arSceneView.setVisibility(View.VISIBLE);
+                        }
                         else -> {}
                     }
                 }

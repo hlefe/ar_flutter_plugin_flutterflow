@@ -111,6 +111,16 @@ class ARSessionManager {
     return distance;
   }
 
+  //Disable Camera
+  void disableCamera() {
+    _channel.invokeMethod<void>('disableCamera');
+  }
+
+  //Enable Camera
+  void enableCamera() {
+    _channel.invokeMethod<void>('enableCamera');
+  }
+
   Future<void> _platformCallHandler(MethodCall call) {
     if (debug) {
       print('_platformCallHandler call ${call.method} ${call.arguments}');

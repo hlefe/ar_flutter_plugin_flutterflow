@@ -1,6 +1,6 @@
 name: ar_flutter_plugin_flutterflow
 description: This plugin is a fork of the original AR Flutter Plugin, created because the original plugin had not been updated since 2022.
-version: 0.7.44
+version: 0.7.45
 repository: https://github.com/hlefe/ar_flutter_plugin_flutterflow
 
 environment:
