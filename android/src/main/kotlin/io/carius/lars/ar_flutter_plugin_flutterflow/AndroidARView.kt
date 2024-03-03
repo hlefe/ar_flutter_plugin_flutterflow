@@ -92,6 +92,7 @@ internal class AndroidARView(
     private lateinit var onNodeTapListener: com.google.ar.sceneform.Scene.OnPeekTouchListener
     private var detectedPlanes = HashSet<Plane>()
     private var planeCount = 0
+    private var isCameraEnabled = true
 
     // Method channel handlers
     private val onSessionMethodCall =
@@ -150,6 +151,17 @@ internal class AndroidARView(
                         }
                         "dispose" -> {
                             dispose()
+                        }
+                        "disableCamera" -> {
+                            arSceneView.setVisibility(View.GONE);
+                            arSceneView.scene?.removeOnPeekTouchListener(onNodeTapListener)
+                            isCameraEnabled = false
+                        }
+                        "enableCamera" -> {
+                            arSceneView.setVisibility(View.VISIBLE);
+                            arSceneView.scene?.addOnPeekTouchListener(onNodeTapListener)
+                            isCameraEnabled = true
+
                         }
                         else -> {}
                     }
@@ -282,12 +294,6 @@ internal class AndroidARView(
                             anchorId?.let {
                                 cloudAnchorHandler.resolveCloudAnchor(anchorId, cloudAnchorDownloadedListener())
                             }
-                        }
-                        "disableCamera" -> {
-                            arSceneView.setVisibility(View.GONE);
-                        }
-                        "enableCamera" -> {
-                            arSceneView.setVisibility(View.VISIBLE);
                         }
                         else -> {}
                     }
@@ -610,6 +616,7 @@ internal class AndroidARView(
     }
 
     private fun onFrame(frameTime: FrameTime) {
+        if(isCameraEnabled){
         if (arSceneView.arFrame != null){
         for (plane in arSceneView.arFrame!!.getUpdatedTrackables(Plane::class.java)) {
             if (plane.trackingState == TrackingState.TRACKING && !detectedPlanes.contains(plane)) {
@@ -655,23 +662,24 @@ internal class AndroidARView(
             }
             // Release resources
             pointCloud?.release()
-        }
+        }}
         val updatedAnchors = arSceneView.arFrame!!.updatedAnchors
         // Notify the cloudManager of all the updates.
         if (this::cloudAnchorHandler.isInitialized) {cloudAnchorHandler.onUpdate(updatedAnchors)}
-
-        if (keepNodeSelected && transformationSystem.selectedNode != null && transformationSystem.selectedNode!!.isTransforming){
-            // If the selected node is currently transforming, we want to deselect it as soon as the transformation is done
-            keepNodeSelected = false
-        }
-        if (!keepNodeSelected && transformationSystem.selectedNode != null && !transformationSystem.selectedNode!!.isTransforming){
-            // once the transformation is done, deselect the node and allow selection of another node
-            transformationSystem.selectNode(null)
-            keepNodeSelected = true
-        }
-        if (!enablePans && !enableRotation){
-            //unselect all nodes as we do not want the selection visualizer
-            transformationSystem.selectNode(null)
+        if(isCameraEnabled) {
+            if (keepNodeSelected && transformationSystem.selectedNode != null && transformationSystem.selectedNode!!.isTransforming) {
+                // If the selected node is currently transforming, we want to deselect it as soon as the transformation is done
+                keepNodeSelected = false
+            }
+            if (!keepNodeSelected && transformationSystem.selectedNode != null && !transformationSystem.selectedNode!!.isTransforming) {
+                // once the transformation is done, deselect the node and allow selection of another node
+                transformationSystem.selectNode(null)
+                keepNodeSelected = true
+            }
+            if (!enablePans && !enableRotation) {
+                //unselect all nodes as we do not want the selection visualizer
+                transformationSystem.selectNode(null)
+            }
         }
 
     }

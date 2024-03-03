@@ -1,5 +1,5 @@
 # Changelog
-## 0.7.45
+## 0.7.46
 * Add diableCamera and enableCamera to ARSessionManager to allow the user to disable and enable the camera (only for Android).
 
 ## 0.7.44
