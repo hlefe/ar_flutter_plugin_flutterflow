@@ -120,7 +120,7 @@ class IosARView: NSObject, FlutterPlatformView, ARSCNViewDelegate, UIGestureReco
           
         switch call.method {
             case "init":
-                self.objectManagerChannel.invokeMethod("onError", arguments: ["ObjectTEST from iOS"])
+                DispatchQueue.main.async {self.objectManagerChannel.invokeMethod("onError", arguments: ["ObjectTEST from iOS"])}
                 result(nil)
                 break
             case "addNode":
@@ -157,7 +157,7 @@ class IosARView: NSObject, FlutterPlatformView, ARSCNViewDelegate, UIGestureReco
           
         switch call.method {
             case "init":
-                self.objectManagerChannel.invokeMethod("onError", arguments: ["ObjectTEST from iOS"])
+                DispatchQueue.main.async {self.objectManagerChannel.invokeMethod("onError", arguments: ["ObjectTEST from iOS"])}
                 result(nil)
                 break
             case "addAnchor":
@@ -198,10 +198,10 @@ class IosARView: NSObject, FlutterPlatformView, ARSCNViewDelegate, UIGestureReco
                         
                         arcoreMode = true
                     } else {
-                        sessionManagerChannel.invokeMethod("onError", arguments: ["Error generating JWT, have you added cloudAnchorKey.json into the ios/Runner directory ?"])
+                        DispatchQueue.main.async {self.sessionManagerChannel.invokeMethod("onError", arguments: ["Error generating JWT, have you added cloudAnchorKey.json into the ios/Runner directory ?"])}
                     }
                 } else {
-                    sessionManagerChannel.invokeMethod("onError", arguments: ["Error initializing Google AR Session"])
+                    DispatchQueue.main.async {self.sessionManagerChannel.invokeMethod("onError", arguments: ["Error initializing Google AR Session"])}
                 }
                     
                 break
@@ -348,7 +348,7 @@ class IosARView: NSObject, FlutterPlatformView, ARSCNViewDelegate, UIGestureReco
             let plane = modelBuilder.makePlane(anchor: planeAnchor, flutterAssetFile: customPlaneTexturePath)
             trackedPlanes[anchor.identifier] = (node, plane)
             planeCount += 1
-            self.sessionManagerChannel.invokeMethod("onPlaneDetected", arguments: planeCount)
+            DispatchQueue.main.async {self.sessionManagerChannel.invokeMethod("onPlaneDetected", arguments: self.planeCount)}
             if (showPlanes) {
                 node.addChildNode(plane)
             }
@@ -407,7 +407,7 @@ class IosARView: NSObject, FlutterPlatformView, ARSCNViewDelegate, UIGestureReco
                         }
                         promise(.success(false))
                     } else {
-                        self.sessionManagerChannel.invokeMethod("onError", arguments: ["Unable to load renderable \(dict_node["uri"] as! String)"])
+                        DispatchQueue.main.async {self.sessionManagerChannel.invokeMethod("onError", arguments: ["Unable to load renderable \(dict_node["uri"] as! String)"])}
                         promise(.success(false))
                     }
                     break
@@ -439,7 +439,7 @@ class IosARView: NSObject, FlutterPlatformView, ARSCNViewDelegate, UIGestureReco
                             }
                             promise(.success(false))
                         } else {
-                            self.sessionManagerChannel.invokeMethod("onError", arguments: ["Unable to load renderable \(dict_node["name"] as! String)"])
+                            DispatchQueue.main.async {self.sessionManagerChannel.invokeMethod("onError", arguments: ["Unable to load renderable \(dict_node["name"] as! String)"])}
                             promise(.success(false))
                         }
                     }).store(in: &self.cancellableCollection)
@@ -473,7 +473,7 @@ class IosARView: NSObject, FlutterPlatformView, ARSCNViewDelegate, UIGestureReco
                         }
                         promise(.success(false))
                     } else {
-                        self.sessionManagerChannel.invokeMethod("onError", arguments: ["Unable to load renderable \(dict_node["uri"] as! String)"])
+                        DispatchQueue.main.async {self.sessionManagerChannel.invokeMethod("onError", arguments: ["Unable to load renderable \(dict_node["uri"] as! String)"])}
                         promise(.success(false))
                     }
                     break
@@ -506,7 +506,7 @@ class IosARView: NSObject, FlutterPlatformView, ARSCNViewDelegate, UIGestureReco
                         }
                         promise(.success(false))
                     } else {
-                        self.sessionManagerChannel.invokeMethod("onError", arguments: ["Unable to load renderable \(dict_node["uri"] as! String)"])
+                        DispatchQueue.main.async {self.sessionManagerChannel.invokeMethod("onError", arguments: ["Unable to load renderable \(dict_node["uri"] as! String)"])}
                         promise(.success(false))
                     }
                     break
@@ -532,7 +532,7 @@ class IosARView: NSObject, FlutterPlatformView, ARSCNViewDelegate, UIGestureReco
         // Because 3D model loading can lead to composed nodes, we have to traverse through a node's parent until the parent node with the name assigned by the Flutter API is found
         let nodeHitResults: Array<String> = allHitResults.compactMap { nearestParentWithNameStart(node: $0.node, characters: "[#")?.name }
         if (nodeHitResults.count != 0) {
-            self.objectManagerChannel.invokeMethod("onNodeTap", arguments: Array(Set(nodeHitResults))) // Chaining of Array and Set is used to remove duplicates
+            DispatchQueue.main.async {self.objectManagerChannel.invokeMethod("onNodeTap", arguments: Array(Set(nodeHitResults)))} // Chaining of Array and Set is used to remove duplicates
             return
         }
             
@@ -552,7 +552,7 @@ class IosARView: NSObject, FlutterPlatformView, ARSCNViewDelegate, UIGestureReco
             
         let serializedPlaneAndPointHitResults = planeAndPointHitResults.map{serializeHitResult($0)}
         if (serializedPlaneAndPointHitResults.count != 0) {
-            self.sessionManagerChannel.invokeMethod("onPlaneOrPointTap", arguments: serializedPlaneAndPointHitResults)
+            DispatchQueue.main.async {self.sessionManagerChannel.invokeMethod("onPlaneOrPointTap", arguments: serializedPlaneAndPointHitResults)}
         }
     }
 
@@ -578,7 +578,7 @@ class IosARView: NSObject, FlutterPlatformView, ARSCNViewDelegate, UIGestureReco
                 }
                 if (nodeHitResults.count != 0 && panningNode != nil) {
                     panningNodeCurrentWorldLocation = panningNode!.worldPosition
-                    self.objectManagerChannel.invokeMethod("onPanStart", arguments: panningNode!.name) // Chaining of Array and Set is used to remove duplicates
+                    DispatchQueue.main.async {self.objectManagerChannel.invokeMethod("onPanStart", arguments: self.panningNode!.name)} // Chaining of Array and Set is used to remove duplicates
                     return
                 }
             }
@@ -601,7 +601,7 @@ class IosARView: NSObject, FlutterPlatformView, ARSCNViewDelegate, UIGestureReco
                     let posZ = result.worldTransform.columns.3.z
                     panNode.worldPosition = SCNVector3(posX, posY, posZ)
                 }
-                self.objectManagerChannel.invokeMethod("onPanChange", arguments: panNode.name)
+                DispatchQueue.main.async {self.objectManagerChannel.invokeMethod("onPanChange", arguments: panNode.name)}
             }
         }
         // State Ended
@@ -610,7 +610,7 @@ class IosARView: NSObject, FlutterPlatformView, ARSCNViewDelegate, UIGestureReco
             // kill variables
             panStartLocation = nil
             panCurrentLocation = nil
-            self.objectManagerChannel.invokeMethod("onPanEnd", arguments: serializeLocalTransformation(node: panningNode))
+            DispatchQueue.main.async {self.objectManagerChannel.invokeMethod("onPanEnd", arguments: serializeLocalTransformation(node: self.panningNode))}
             panningNode = nil
         }
     }
@@ -636,7 +636,7 @@ class IosARView: NSObject, FlutterPlatformView, ARSCNViewDelegate, UIGestureReco
                     }
                 }
                 if (nodeHitResults.count != 0 && panningNode != nil) {
-                    self.objectManagerChannel.invokeMethod("onRotationStart", arguments: panningNode!.name) // Chaining of Array and Set is used to remove duplicates
+                    DispatchQueue.main.async {self.objectManagerChannel.invokeMethod("onRotationStart", arguments: self.panningNode!.name)} // Chaining of Array and Set is used to remove duplicates
                     return
                 }
             }
@@ -660,7 +660,7 @@ class IosARView: NSObject, FlutterPlatformView, ARSCNViewDelegate, UIGestureReco
                     rotation = SCNQuaternion(x: 0, y: 0, z: 1, w: nodeRotation.w+Float(r2)) // quickest way to convert screen into world positions (meters)
                 }
                 panNode.rotation = rotation
-                self.objectManagerChannel.invokeMethod("onRotationChange", arguments: panNode.name)
+                DispatchQueue.main.async {self.objectManagerChannel.invokeMethod("onRotationChange", arguments: panNode.name)}
             }
 
             // update position of panning node if it has been created
@@ -672,7 +672,7 @@ class IosARView: NSObject, FlutterPlatformView, ARSCNViewDelegate, UIGestureReco
             // kill variables
             rotation = nil
             rotationVelocity = nil
-            self.objectManagerChannel.invokeMethod("onRotationEnd", arguments: serializeLocalTransformation(node: panningNode))
+            DispatchQueue.main.async {self.objectManagerChannel.invokeMethod("onRotationEnd", arguments: serializeLocalTransformation(node: self.panningNode))}
             panningNode = nil
         }
     
@@ -724,10 +724,10 @@ class IosARView: NSObject, FlutterPlatformView, ARSCNViewDelegate, UIGestureReco
                     var args = Dictionary<String, String?>()
                     args["name"] = anchorName
                     args["cloudanchorid"] = anchor?.cloudIdentifier
-                    parent.anchorManagerChannel.invokeMethod("onCloudAnchorUploaded", arguments: args)
+                    DispatchQueue.main.async {self.parent.anchorManagerChannel.invokeMethod("onCloudAnchorUploaded", arguments: args)}
                 } else {
                     print("Error uploading anchor, state: \(parent.decodeCloudAnchorState(state: cloudState))")
-                    parent.sessionManagerChannel.invokeMethod("onError", arguments: ["Error uploading anchor, state: \(parent.decodeCloudAnchorState(state: cloudState))"])
+                    DispatchQueue.main.async {self.parent.sessionManagerChannel.invokeMethod("onError", arguments: ["Error uploading anchor, state: \(self.parent.decodeCloudAnchorState(state: cloudState))"])}
                     return
                 }
             }
@@ -746,18 +746,18 @@ class IosARView: NSObject, FlutterPlatformView, ARSCNViewDelegate, UIGestureReco
                 if (cloudState == GARCloudAnchorState.success) {
                     let newAnchor = ARAnchor(transform: anchor!.transform)
                     // Register new anchor on the Flutter side of the plugin
-                    parent.anchorManagerChannel.invokeMethod("onAnchorDownloadSuccess", arguments: serializeAnchor(anchor: newAnchor, anchorNode: nil, ganchor: anchor!, name: anchorName), result: { result in
+                    DispatchQueue.main.async {self.parent.anchorManagerChannel.invokeMethod("onAnchorDownloadSuccess", arguments: serializeAnchor(anchor: newAnchor, anchorNode: nil, ganchor: anchor!, name: anchorName), result: { result in
                         if let anchorName = result as? String {
                             self.parent.sceneView.session.add(anchor: newAnchor)
                             self.parent.anchorCollection[anchorName] = newAnchor
                         } else {
-                            self.parent.sessionManagerChannel.invokeMethod("onError", arguments: ["Error while registering downloaded anchor at the AR Flutter plugin"])
+                            DispatchQueue.main.async {self.parent.sessionManagerChannel.invokeMethod("onError", arguments: ["Error while registering downloaded anchor at the AR Flutter plugin"])}
                         }
 
-                    })
+                    })}
                 } else {
                     print("Error downloading anchor, state \(cloudState)")
-                    parent.sessionManagerChannel.invokeMethod("onError", arguments: ["Error downloading anchor, state \(cloudState)"])
+                    DispatchQueue.main.async {self.parent.sessionManagerChannel.invokeMethod("onError", arguments: ["Error downloading anchor, state \(cloudState)"])}
                     return
                 }
             }
