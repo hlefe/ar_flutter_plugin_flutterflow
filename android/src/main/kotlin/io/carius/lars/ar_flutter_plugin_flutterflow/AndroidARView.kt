@@ -33,7 +33,8 @@ import java.io.ByteArrayOutputStream
 import java.io.IOException
 import java.nio.FloatBuffer
 import java.util.concurrent.CompletableFuture
-
+//import com.chaquo.python.Python
+//import com.chaquo.python.PyObject
 import kotlinx.coroutines.*
 
 import android.R
@@ -91,6 +92,7 @@ internal class AndroidARView(
     // newly added from Miranda
     private val imageUtil = ImageUtil()
     private val depthImgUtil = DepthImgUtil()
+
     private val imageFetchingScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
     private var trackingProgress = 0
 
@@ -162,6 +164,27 @@ internal class AndroidARView(
                             arSceneView.scene?.addOnPeekTouchListener(onNodeTapListener)
                             isCameraEnabled = true
 
+                        }
+                        // newly added
+                        "getCameraImage" -> {
+                            val imageMap = getCameraImage()
+                            result.success(imageMap)
+                        }
+                        "getDepthImage" -> {
+                            val imageMap = getDepthImage()
+                            result.success(imageMap)
+                        }
+                        "startFetchingImages" -> {
+                            startFetchingImages()
+                            result.success(null)
+                        }
+                        "stopFetchingImages" -> {
+                            stopFetchingImages()
+                            result.success(null)
+                        }
+                        "getCameraIntrinsics" -> {
+                            val intrinsics = getCameraIntrinsics()
+                            result.success(intrinsics)
                         }
                         else -> {}
                     }
@@ -413,6 +436,8 @@ internal class AndroidARView(
                     val config = Config(session)
                     config.updateMode = Config.UpdateMode.LATEST_CAMERA_IMAGE
                     config.focusMode = Config.FocusMode.AUTO
+                    // newly added
+                    config.depthMode = Config.DepthMode.AUTOMATIC
                     session.configure(config)
                     arSceneView.setupSession(session)
                 }
@@ -615,32 +640,96 @@ internal class AndroidARView(
         result.success(null)
     }
 
+//    private fun onFrame(frameTime: FrameTime) {
+//        if(isCameraEnabled){
+//        if (arSceneView.arFrame != null){
+//        for (plane in arSceneView.arFrame!!.getUpdatedTrackables(Plane::class.java)) {
+//            if (plane.trackingState == TrackingState.TRACKING && !detectedPlanes.contains(plane)) {
+//                detectedPlanes.add(plane)
+//                planeCount++
+//                sessionManagerChannel.invokeMethod("onPlaneDetected", planeCount)
+//            }
+//        }}
+//        // hide instructions view if no longer required
+//        if (showAnimatedGuide && arSceneView.arFrame != null){
+//            for (plane in arSceneView.arFrame!!.getUpdatedTrackables(Plane::class.java)) {
+//                if (plane.trackingState === TrackingState.TRACKING) {
+//                    val view = activity.findViewById(R.id.content) as ViewGroup
+//                    view.removeView(animatedGuide)
+//                    showAnimatedGuide = false
+//                    break
+//                }
+//            }
+//        }
+//
+//        if (showFeaturePoints) {
+//            // remove points from last frame
+//            while (pointCloudNode.children?.size
+//                    ?: 0 > 0) {
+//                pointCloudNode.children?.first()?.setParent(null)
+//            }
+//            var pointCloud = arSceneView.arFrame?.acquirePointCloud()
+//            // Access point cloud data (returns FloatBufferw with x,y,z coordinates and confidence
+//            // value).
+//            val points = pointCloud?.getPoints() ?: FloatBuffer.allocate(0)
+//            // Check if there are any feature points
+//            if (points.limit() / 4 >= 1) {
+//                for (index in 0 until points.limit() / 4) {
+//                    // Add feature point to scene
+//                    val featurePoint =
+//                            modelBuilder.makeFeaturePointNode(
+//                                    viewContext,
+//                                    points.get(4 * index),
+//                                    points.get(4 * index + 1),
+//                                    points.get(4 * index + 2))
+//                    featurePoint.setParent(pointCloudNode)
+//                }
+//            }
+//            // Release resources
+//            pointCloud?.release()
+//        }}
+//        val updatedAnchors = arSceneView.arFrame!!.updatedAnchors
+//        // Notify the cloudManager of all the updates.
+//        if (this::cloudAnchorHandler.isInitialized) {cloudAnchorHandler.onUpdate(updatedAnchors)}
+//        if(isCameraEnabled) {
+//            if (keepNodeSelected && transformationSystem.selectedNode != null && transformationSystem.selectedNode!!.isTransforming) {
+//                // If the selected node is currently transforming, we want to deselect it as soon as the transformation is done
+//                keepNodeSelected = false
+//            }
+//            if (!keepNodeSelected && transformationSystem.selectedNode != null && !transformationSystem.selectedNode!!.isTransforming) {
+//                // once the transformation is done, deselect the node and allow selection of another node
+//                transformationSystem.selectNode(null)
+//                keepNodeSelected = true
+//            }
+//            if (!enablePans && !enableRotation) {
+//                //unselect all nodes as we do not want the selection visualizer
+//                transformationSystem.selectNode(null)
+//            }
+//        }
+//
+//    }
+
     private fun onFrame(frameTime: FrameTime) {
-        if(isCameraEnabled){
-        if (arSceneView.arFrame != null){
-        for (plane in arSceneView.arFrame!!.getUpdatedTrackables(Plane::class.java)) {
-            if (plane.trackingState == TrackingState.TRACKING && !detectedPlanes.contains(plane)) {
-                detectedPlanes.add(plane)
-                planeCount++
-                sessionManagerChannel.invokeMethod("onPlaneDetected", planeCount)
-            }
-        }}
         // hide instructions view if no longer required
-        if (showAnimatedGuide && arSceneView.arFrame != null){
+        if (showAnimatedGuide && arSceneView.arFrame != null && trackingProgress < 100) {
             for (plane in arSceneView.arFrame!!.getUpdatedTrackables(Plane::class.java)) {
                 if (plane.trackingState === TrackingState.TRACKING) {
-                    val view = activity.findViewById(R.id.content) as ViewGroup
-                    view.removeView(animatedGuide)
-                    showAnimatedGuide = false
-                    break
+                    trackingProgress += 5
+                    sessionManagerChannel.invokeMethod("motionData", trackingProgress)
                 }
+            }
+
+            if(trackingProgress >= 100) {
+                val view = activity.findViewById(R.id.content) as ViewGroup
+                view.removeView(animatedGuide)
+                showAnimatedGuide = false
             }
         }
 
         if (showFeaturePoints) {
             // remove points from last frame
             while (pointCloudNode.children?.size
-                    ?: 0 > 0) {
+                ?: 0 > 0) {
                 pointCloudNode.children?.first()?.setParent(null)
             }
             var pointCloud = arSceneView.arFrame?.acquirePointCloud()
@@ -652,36 +741,34 @@ internal class AndroidARView(
                 for (index in 0 until points.limit() / 4) {
                     // Add feature point to scene
                     val featurePoint =
-                            modelBuilder.makeFeaturePointNode(
-                                    viewContext,
-                                    points.get(4 * index),
-                                    points.get(4 * index + 1),
-                                    points.get(4 * index + 2))
+                        modelBuilder.makeFeaturePointNode(
+                            viewContext,
+                            points.get(4 * index),
+                            points.get(4 * index + 1),
+                            points.get(4 * index + 2))
                     featurePoint.setParent(pointCloudNode)
                 }
             }
             // Release resources
             pointCloud?.release()
-        }}
+        }
         val updatedAnchors = arSceneView.arFrame!!.updatedAnchors
         // Notify the cloudManager of all the updates.
         if (this::cloudAnchorHandler.isInitialized) {cloudAnchorHandler.onUpdate(updatedAnchors)}
-        if(isCameraEnabled) {
-            if (keepNodeSelected && transformationSystem.selectedNode != null && transformationSystem.selectedNode!!.isTransforming) {
-                // If the selected node is currently transforming, we want to deselect it as soon as the transformation is done
-                keepNodeSelected = false
-            }
-            if (!keepNodeSelected && transformationSystem.selectedNode != null && !transformationSystem.selectedNode!!.isTransforming) {
-                // once the transformation is done, deselect the node and allow selection of another node
-                transformationSystem.selectNode(null)
-                keepNodeSelected = true
-            }
-            if (!enablePans && !enableRotation) {
-                //unselect all nodes as we do not want the selection visualizer
-                transformationSystem.selectNode(null)
-            }
-        }
 
+        if (keepNodeSelected && transformationSystem.selectedNode != null && transformationSystem.selectedNode!!.isTransforming){
+            // If the selected node is currently transforming, we want to deselect it as soon as the transformation is done
+            keepNodeSelected = false
+        }
+        if (!keepNodeSelected && transformationSystem.selectedNode != null && !transformationSystem.selectedNode!!.isTransforming){
+            // once the transformation is done, deselect the node and allow selection of another node
+            transformationSystem.selectNode(null)
+            keepNodeSelected = true
+        }
+        if (!enablePans && !enableRotation){
+            //unselect all nodes as we do not want the selection visualizer
+            transformationSystem.selectNode(null)
+        }
     }
 
     private fun addNode(dict_node: HashMap<String, Any>, dict_anchor: HashMap<String, Any>? = null): CompletableFuture<Boolean>{
