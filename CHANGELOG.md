@@ -1,4 +1,7 @@
 # Changelog
+## 0.7.47
+* Added the ability to hide or show surfaces after initialization using the function: arSessionManager.showPlanes(false/true);
+
 ## 0.7.46
 * Add diableCamera and enableCamera to ARSessionManager to allow the user to disable and enable the camera (only for Android).
 

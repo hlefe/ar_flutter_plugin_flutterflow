@@ -163,6 +163,9 @@ internal class AndroidARView(
                             isCameraEnabled = true
 
                         }
+                        "showPlanes" -> {
+                            arSceneView.planeRenderer.isVisible = call.argument<Boolean>("showPlanes") ?: false
+                        }
                         else -> {}
                     }
                 }

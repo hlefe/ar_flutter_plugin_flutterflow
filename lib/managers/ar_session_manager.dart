@@ -121,6 +121,13 @@ class ARSessionManager {
     _channel.invokeMethod<void>('enableCamera');
   }
 
+  //Show or hide planes
+  void showPlanes(bool showPlanes){
+    _channel.invokeMethod<void>('showPlanes', {
+    "showPlanes": showPlanes,
+    });
+  }
+
   Future<void> _platformCallHandler(MethodCall call) {
     if (debug) {
       print('_platformCallHandler call ${call.method} ${call.arguments}');

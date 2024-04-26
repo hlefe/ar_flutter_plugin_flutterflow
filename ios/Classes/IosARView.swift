@@ -109,6 +109,25 @@ class IosARView: NSObject, FlutterPlatformView, ARSCNViewDelegate, UIGestureReco
                 onDispose(result)
                 result(nil)
                 break
+            case "showPlanes":
+                if let showPlanesArgument = arguments?["showPlanes"] as? Bool {
+                        showPlanes = showPlanesArgument
+                } else {
+                    showPlanes = false
+                }
+                if (showPlanes){
+                    // Visualize currently tracked planes
+                    for plane in trackedPlanes.values {
+                        plane.0.addChildNode(plane.1)
+                    }
+                } else {
+                    // Remove currently visualized planes
+                    for plane in trackedPlanes.values {
+                        plane.1.removeFromParentNode()
+                    }
+                }
+                result(nil)
+                break
             default:
                 result(FlutterMethodNotImplemented)
                 break
