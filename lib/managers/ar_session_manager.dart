@@ -1,13 +1,18 @@
 import 'dart:math' show sqrt;
+import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:ar_flutter_plugin_flutterflow/datatypes/config_planedetection.dart';
 import 'package:ar_flutter_plugin_flutterflow/models/ar_anchor.dart';
 import 'package:ar_flutter_plugin_flutterflow/models/ar_hittest_result.dart';
+import 'package:ar_flutter_plugin_flutterflow/models/camera_intrinsics.dart';
 import 'package:ar_flutter_plugin_flutterflow/utils/json_converters.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:vector_math/vector_math_64.dart';
+
+import '../models/ar_image.dart';
+import '../models/camera_image.dart';
 
 // Type definitions to enforce a consistent use of the API
 typedef ARHitResultHandler = void Function(List<ARHitTestResult> hits);
@@ -36,6 +41,12 @@ class ARSessionManager {
 
   /// Callback that is triggered once error is triggered
   ErrorHandler? onError;
+
+  /// Stream of depth images
+  static StreamController<double>? _imageStreamController;
+
+  /// Stream of motion progress updates
+  static StreamController<int>? _progressController;
 
   ARSessionManager(int id, this.buildContext, this.planeDetectionConfig,
       {this.debug = false}) {
@@ -121,6 +132,59 @@ class ARSessionManager {
     _channel.invokeMethod<void>('enableCamera');
   }
 
+
+  /// Returns the camera intrinsics
+  Future<CameraIntrinsics> getCameraIntrinsics() async {
+    final Map<dynamic, dynamic> result =
+    await _channel.invokeMethod('getCameraIntrinsics');
+    return CameraIntrinsics.fromMap(result);
+  }
+
+  /// Returns the camera image
+  Future<CameraImage> getCameraImage() async {
+    final Map<dynamic, dynamic> result =
+    await _channel.invokeMethod('getCameraImage');
+    return CameraImage.fromMap(result);
+  }
+
+  /// Returns the depth image
+  Future<ARImage> getDepthImage() async {
+    final Map<dynamic, dynamic> result =
+    await _channel.invokeMethod('getDepthImage');
+    return ARImage.fromMap(result);
+  }
+
+  /// Starts depth images stream
+  void startFetchingImages() {
+    _channel.invokeMethod('startFetchingImages');
+  }
+
+  /// Stops depth images stream
+  void stopFetchingImages() {
+    _channel.invokeMethod('stopFetchingImages');
+    _imageStreamController?.close();
+    _imageStreamController = null;
+  }
+
+  /// Returns the depth image stream for listening
+  Stream<double> get depthQualityStream {
+    _imageStreamController ??= StreamController<double>.broadcast();
+    return _imageStreamController!.stream;
+  }
+
+  /// Stops motion progress stream
+  void stopMotionUpdates() {
+    _channel.invokeMethod('stopMotionUpdates');
+    _progressController?.close();
+    _progressController = null;
+  }
+
+  /// Returns the motion progress stream for listening
+  Stream<int> get motionUpdatesStream {
+    _progressController ??= StreamController<int>.broadcast();
+    return _progressController!.stream;
+  }
+
   Future<void> _platformCallHandler(MethodCall call) {
     if (debug) {
       print('_platformCallHandler call ${call.method} ${call.arguments}');
@@ -163,6 +227,14 @@ class ARSessionManager {
         case 'dispose':
           _channel.invokeMethod<void>("dispose");
           break;
+        // case 'imageData':
+        //   double imageQuality = call.arguments as double;
+        //   _imageStreamController?.add(imageQuality);
+        //   break;
+        case 'motionData':
+          int motionProgress = call.arguments as int;
+          _progressController?.add(motionProgress);
+          break;
         default:
           if (debug) {
             print('Unimplemented method ${call.method} ');
@@ -200,12 +272,25 @@ class ARSessionManager {
     });
   }
 
+  // /// Displays the [errorMessage] in a snackbar of the parent widget
+  // onError(String errorMessage) {
+  //   ScaffoldMessenger.of(buildContext).showSnackBar(SnackBar(
+  //       content: Text(errorMessage),
+  //       action: SnackBarAction(
+  //           label: 'HIDE',
+  //           onPressed:
+  //           ScaffoldMessenger.of(buildContext).hideCurrentSnackBar)));
+  // }
 
   /// Dispose the AR view on the platforms to pause the scenes and disconnect the platform handlers.
   /// You should call this before removing the AR view to prevent out of memory erros
   dispose() async {
     try {
       await _channel.invokeMethod<void>("dispose");
+      _imageStreamController?.close();
+      _imageStreamController = null;
+      _progressController?.close();
+      _progressController = null;
     } catch (e) {
       print(e);
     }

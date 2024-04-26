@@ -1,13 +1,14 @@
 package io.carius.lars.ar_flutter_plugin_flutterflow
-
 import android.app.Activity
 import android.app.Application
 import android.content.Context
 import android.graphics.Bitmap
+import android.media.Image
 import android.net.Uri
 import android.os.Bundle
 import android.os.Handler
 import android.os.HandlerThread
+import android.os.Looper
 import android.util.Log
 import android.view.MotionEvent
 import android.view.PixelCopy
@@ -32,6 +33,9 @@ import java.io.ByteArrayOutputStream
 import java.io.IOException
 import java.nio.FloatBuffer
 import java.util.concurrent.CompletableFuture
+//import com.chaquo.python.Python
+//import com.chaquo.python.PyObject
+import kotlinx.coroutines.*
 
 import android.R
 import com.google.ar.sceneform.rendering.*
@@ -40,17 +44,8 @@ import android.view.ViewGroup
 
 import com.google.ar.core.TrackingState
 
-
-
-
-
-
-
-
-
-
-
-
+import DepthImgUtil
+import ImageUtil
 
 
 internal class AndroidARView(
@@ -93,6 +88,13 @@ internal class AndroidARView(
     private var detectedPlanes = HashSet<Plane>()
     private var planeCount = 0
     private var isCameraEnabled = true
+
+    // newly added from Miranda
+    private val imageUtil = ImageUtil()
+    private val depthImgUtil = DepthImgUtil()
+
+    private val imageFetchingScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
+    private var trackingProgress = 0
 
     // Method channel handlers
     private val onSessionMethodCall =
@@ -162,6 +164,27 @@ internal class AndroidARView(
                             arSceneView.scene?.addOnPeekTouchListener(onNodeTapListener)
                             isCameraEnabled = true
 
+                        }
+                        // newly added
+                        "getCameraImage" -> {
+                            val imageMap = getCameraImage()
+                            result.success(imageMap)
+                        }
+                        "getDepthImage" -> {
+                            val imageMap = getDepthImage()
+                            result.success(imageMap)
+                        }
+                        "startFetchingImages" -> {
+                            startFetchingImages()
+                            result.success(null)
+                        }
+                        "stopFetchingImages" -> {
+                            stopFetchingImages()
+                            result.success(null)
+                        }
+                        "getCameraIntrinsics" -> {
+                            val intrinsics = getCameraIntrinsics()
+                            result.success(intrinsics)
                         }
                         else -> {}
                     }
@@ -413,6 +436,8 @@ internal class AndroidARView(
                     val config = Config(session)
                     config.updateMode = Config.UpdateMode.LATEST_CAMERA_IMAGE
                     config.focusMode = Config.FocusMode.AUTO
+                    // newly added
+                    config.depthMode = Config.DepthMode.AUTOMATIC
                     session.configure(config)
                     arSceneView.setupSession(session)
                 }
@@ -615,32 +640,96 @@ internal class AndroidARView(
         result.success(null)
     }
 
+//    private fun onFrame(frameTime: FrameTime) {
+//        if(isCameraEnabled){
+//        if (arSceneView.arFrame != null){
+//        for (plane in arSceneView.arFrame!!.getUpdatedTrackables(Plane::class.java)) {
+//            if (plane.trackingState == TrackingState.TRACKING && !detectedPlanes.contains(plane)) {
+//                detectedPlanes.add(plane)
+//                planeCount++
+//                sessionManagerChannel.invokeMethod("onPlaneDetected", planeCount)
+//            }
+//        }}
+//        // hide instructions view if no longer required
+//        if (showAnimatedGuide && arSceneView.arFrame != null){
+//            for (plane in arSceneView.arFrame!!.getUpdatedTrackables(Plane::class.java)) {
+//                if (plane.trackingState === TrackingState.TRACKING) {
+//                    val view = activity.findViewById(R.id.content) as ViewGroup
+//                    view.removeView(animatedGuide)
+//                    showAnimatedGuide = false
+//                    break
+//                }
+//            }
+//        }
+//
+//        if (showFeaturePoints) {
+//            // remove points from last frame
+//            while (pointCloudNode.children?.size
+//                    ?: 0 > 0) {
+//                pointCloudNode.children?.first()?.setParent(null)
+//            }
+//            var pointCloud = arSceneView.arFrame?.acquirePointCloud()
+//            // Access point cloud data (returns FloatBufferw with x,y,z coordinates and confidence
+//            // value).
+//            val points = pointCloud?.getPoints() ?: FloatBuffer.allocate(0)
+//            // Check if there are any feature points
+//            if (points.limit() / 4 >= 1) {
+//                for (index in 0 until points.limit() / 4) {
+//                    // Add feature point to scene
+//                    val featurePoint =
+//                            modelBuilder.makeFeaturePointNode(
+//                                    viewContext,
+//                                    points.get(4 * index),
+//                                    points.get(4 * index + 1),
+//                                    points.get(4 * index + 2))
+//                    featurePoint.setParent(pointCloudNode)
+//                }
+//            }
+//            // Release resources
+//            pointCloud?.release()
+//        }}
+//        val updatedAnchors = arSceneView.arFrame!!.updatedAnchors
+//        // Notify the cloudManager of all the updates.
+//        if (this::cloudAnchorHandler.isInitialized) {cloudAnchorHandler.onUpdate(updatedAnchors)}
+//        if(isCameraEnabled) {
+//            if (keepNodeSelected && transformationSystem.selectedNode != null && transformationSystem.selectedNode!!.isTransforming) {
+//                // If the selected node is currently transforming, we want to deselect it as soon as the transformation is done
+//                keepNodeSelected = false
+//            }
+//            if (!keepNodeSelected && transformationSystem.selectedNode != null && !transformationSystem.selectedNode!!.isTransforming) {
+//                // once the transformation is done, deselect the node and allow selection of another node
+//                transformationSystem.selectNode(null)
+//                keepNodeSelected = true
+//            }
+//            if (!enablePans && !enableRotation) {
+//                //unselect all nodes as we do not want the selection visualizer
+//                transformationSystem.selectNode(null)
+//            }
+//        }
+//
+//    }
+
     private fun onFrame(frameTime: FrameTime) {
-        if(isCameraEnabled){
-        if (arSceneView.arFrame != null){
-        for (plane in arSceneView.arFrame!!.getUpdatedTrackables(Plane::class.java)) {
-            if (plane.trackingState == TrackingState.TRACKING && !detectedPlanes.contains(plane)) {
-                detectedPlanes.add(plane)
-                planeCount++
-                sessionManagerChannel.invokeMethod("onPlaneDetected", planeCount)
-            }
-        }}
         // hide instructions view if no longer required
-        if (showAnimatedGuide && arSceneView.arFrame != null){
+        if (showAnimatedGuide && arSceneView.arFrame != null && trackingProgress < 100) {
             for (plane in arSceneView.arFrame!!.getUpdatedTrackables(Plane::class.java)) {
                 if (plane.trackingState === TrackingState.TRACKING) {
-                    val view = activity.findViewById(R.id.content) as ViewGroup
-                    view.removeView(animatedGuide)
-                    showAnimatedGuide = false
-                    break
+                    trackingProgress += 5
+                    sessionManagerChannel.invokeMethod("motionData", trackingProgress)
                 }
+            }
+
+            if(trackingProgress >= 100) {
+                val view = activity.findViewById(R.id.content) as ViewGroup
+                view.removeView(animatedGuide)
+                showAnimatedGuide = false
             }
         }
 
         if (showFeaturePoints) {
             // remove points from last frame
             while (pointCloudNode.children?.size
-                    ?: 0 > 0) {
+                ?: 0 > 0) {
                 pointCloudNode.children?.first()?.setParent(null)
             }
             var pointCloud = arSceneView.arFrame?.acquirePointCloud()
@@ -652,36 +741,34 @@ internal class AndroidARView(
                 for (index in 0 until points.limit() / 4) {
                     // Add feature point to scene
                     val featurePoint =
-                            modelBuilder.makeFeaturePointNode(
-                                    viewContext,
-                                    points.get(4 * index),
-                                    points.get(4 * index + 1),
-                                    points.get(4 * index + 2))
+                        modelBuilder.makeFeaturePointNode(
+                            viewContext,
+                            points.get(4 * index),
+                            points.get(4 * index + 1),
+                            points.get(4 * index + 2))
                     featurePoint.setParent(pointCloudNode)
                 }
             }
             // Release resources
             pointCloud?.release()
-        }}
+        }
         val updatedAnchors = arSceneView.arFrame!!.updatedAnchors
         // Notify the cloudManager of all the updates.
         if (this::cloudAnchorHandler.isInitialized) {cloudAnchorHandler.onUpdate(updatedAnchors)}
-        if(isCameraEnabled) {
-            if (keepNodeSelected && transformationSystem.selectedNode != null && transformationSystem.selectedNode!!.isTransforming) {
-                // If the selected node is currently transforming, we want to deselect it as soon as the transformation is done
-                keepNodeSelected = false
-            }
-            if (!keepNodeSelected && transformationSystem.selectedNode != null && !transformationSystem.selectedNode!!.isTransforming) {
-                // once the transformation is done, deselect the node and allow selection of another node
-                transformationSystem.selectNode(null)
-                keepNodeSelected = true
-            }
-            if (!enablePans && !enableRotation) {
-                //unselect all nodes as we do not want the selection visualizer
-                transformationSystem.selectNode(null)
-            }
-        }
 
+        if (keepNodeSelected && transformationSystem.selectedNode != null && transformationSystem.selectedNode!!.isTransforming){
+            // If the selected node is currently transforming, we want to deselect it as soon as the transformation is done
+            keepNodeSelected = false
+        }
+        if (!keepNodeSelected && transformationSystem.selectedNode != null && !transformationSystem.selectedNode!!.isTransforming){
+            // once the transformation is done, deselect the node and allow selection of another node
+            transformationSystem.selectNode(null)
+            keepNodeSelected = true
+        }
+        if (!enablePans && !enableRotation){
+            //unselect all nodes as we do not want the selection visualizer
+            transformationSystem.selectNode(null)
+        }
     }
 
     private fun addNode(dict_node: HashMap<String, Any>, dict_anchor: HashMap<String, Any>? = null): CompletableFuture<Boolean>{
@@ -895,6 +982,185 @@ internal class AndroidARView(
             anchorNode.setParent(null)
         }
     }
+
+    // newly added from Miranda
+
+    private fun getCameraIntrinsics(): HashMap<String, Any>? {
+        val arFrame = arSceneView.arFrame ?: return null
+        val cameraIntrinsics = arFrame.camera.getImageIntrinsics()
+
+        // Fetching the focal length ([fx, fy])
+        val focalLength = cameraIntrinsics.focalLength
+
+        // Fetching the image dimensions
+        val imageDimensions = cameraIntrinsics.imageDimensions
+
+        // Fetching the principal point ([cx, cy])
+        val principalPoint = cameraIntrinsics.principalPoint
+
+        // Constructing the map to return
+        val intrinsicsMap = hashMapOf<String, Any>(
+            "focalLengthX" to focalLength[0],
+            "focalLengthY" to focalLength[1],
+            "imageWidth" to imageDimensions[0],
+            "imageHeight" to imageDimensions[1],
+            "principalPointX" to principalPoint[0],
+            "principalPointY" to principalPoint[1]
+        )
+
+        return intrinsicsMap
+    }
+
+
+    private fun getCameraImage(): HashMap<String, Any>? {
+        val arFrame = arSceneView.arFrame ?: return null
+
+        val cameraImage: Image = arFrame.acquireCameraImage()
+        val bytes = ImageUtil().imageToByteArray(cameraImage) ?: byteArrayOf()
+
+        val imageMap = hashMapOf<String, Any>(
+            "bytes" to bytes,
+            "width" to cameraImage.width,
+            "height" to cameraImage.height
+        )
+
+        cameraImage.close()
+
+        return imageMap
+    }
+
+    private fun getFullDepthOnly(): HashMap<String, Any>? {
+        val arFrame = arSceneView.arFrame ?: return null
+        try {
+            val depthImage: Image = arFrame.acquireDepthImage16Bits()
+
+            val array = DepthImgUtil().parseImg(depthImage)
+
+            val buffer = depthImage.planes[0].buffer
+            val stride = depthImage.planes[0].rowStride
+            val bytes = ByteArray(buffer.remaining())
+            buffer.get(bytes)
+
+            val imageMap = hashMapOf<String, Any>(
+                "depthImgBytes" to bytes,
+                "width" to depthImage.width,
+                "height" to depthImage.height,
+                "depthImgArrays" to mapOf(
+                    "xBuffer" to array.xBuffer.map { it.toInt() },
+                    "yBuffer" to array.yBuffer.map { it.toInt() },
+                    "dBuffer" to array.dBuffer.toList(),
+                    "percentageBuffer" to array.percentageBuffer.toList(),
+                    "length" to array.length
+                ),
+            )
+            depthImage.close()
+            return imageMap
+        } catch (e: NotYetAvailableException) {
+            // This means that depth data is not available yet.
+            // Depth data will not be available if there are no tracked
+            // feature points. This can happen when there is no motion, or when the
+            // camera loses its ability to track objects in the surrounding
+            // environment.
+        }
+        return null
+    }
+
+    private fun getDepthImage(): HashMap<String, Any>? {
+        val arFrame = arSceneView.arFrame ?: return null
+
+        val depth = arFrame.acquireDepthImage16Bits()
+        val rawDepth = arFrame.acquireRawDepthImage16Bits()
+        val rawDepthConfidence = arFrame.acquireRawDepthConfidenceImage()
+
+        val array = DepthImgUtil().parseImg(depth)
+        val rawArray = DepthImgUtil().parseImg(rawDepth)
+        val confidenceArray = DepthImgUtil().parseImg(rawDepthConfidence)
+
+        val depthBytes = ByteArray(depth.planes[0].buffer.remaining()).apply { depth.planes[0].buffer.get(this) }
+        val rawDepthBytes = ByteArray(rawDepth.planes[0].buffer.remaining()).apply { rawDepth.planes[0].buffer.get(this) }
+        val confidenceBytes = ByteArray(rawDepthConfidence.planes[0].buffer.remaining()).apply { rawDepthConfidence.planes[0].buffer.get(this) }
+
+        val imageMap = hashMapOf<String, Any>(
+            "depthImgBytes" to depthBytes,
+            "rawDepthImgBytes" to rawDepthBytes,
+            "confidenceImgBytes" to confidenceBytes,
+            "width" to depth.width,
+            "height" to depth.height,
+            "depthImgArrays" to mapOf(
+                "xBuffer" to array.xBuffer.map { it.toInt() },
+                "yBuffer" to array.yBuffer.map { it.toInt() },
+                "dBuffer" to array.dBuffer.toList(),
+                "percentageBuffer" to array.percentageBuffer.toList(),
+                "length" to array.length
+            ),
+            "rawDepthImgArrays" to mapOf(
+                "xBuffer" to rawArray.xBuffer.map { it.toInt() },
+                "yBuffer" to rawArray.yBuffer.map { it.toInt() },
+                "dBuffer" to rawArray.dBuffer.toList(),
+                "percentageBuffer" to rawArray.percentageBuffer.toList(),
+                "length" to rawArray.length
+            ),
+            "confidenceImgArrays" to mapOf(
+                "xBuffer" to confidenceArray.xBuffer.map { it.toInt() },
+                "yBuffer" to confidenceArray.yBuffer.map { it.toInt() },
+                "dBuffer" to confidenceArray.dBuffer.toList(),
+                "percentageBuffer" to confidenceArray.percentageBuffer.toList(),
+                "length" to confidenceArray.length
+            )
+        )
+
+        depth.close()
+        rawDepth.close()
+        rawDepthConfidence.close()
+
+        return imageMap
+    }
+
+    fun startFetchingImages() {
+        imageFetchingScope.launch {
+            fetchImages()
+        }
+    }
+
+    suspend fun fetchImages() {
+        while (imageFetchingScope.isActive) {
+            val arFrame = arSceneView.arFrame
+            if (arFrame == null || arFrame.camera.trackingState != TrackingState.TRACKING) {
+                delay(1000 / 30) // for ~30fps
+                continue
+            }
+
+            var cameraImage: Image? = null
+
+            try {
+                cameraImage = arFrame.acquireCameraImage()
+                val bytes = imageUtil.yuvToJpegByteArray(cameraImage) ?: byteArrayOf()
+
+                if (cameraImage != null) {
+//                    withContext(Dispatchers.Default) {
+//                        val pyResult: PyObject = pythonModule.callAttr("get_ratio_inside_box", bytes)
+//                        val result: Double = pyResult.toDouble()
+//                        withContext(Dispatchers.Main) {
+//                            sessionManagerChannel.invokeMethod("imageData", result)
+//                        }
+                    Log.d("ARCore", "Result sent to session manager: $bytes")
+                }
+            } catch (e: DeadlineExceededException) {
+                Log.e("ARCore", "Deadline exceeded when trying to acquire resources.")
+            } finally {
+                cameraImage?.close()
+            }
+
+            delay(1000 / 30) // for ~30fps
+        }
+    }
+
+    fun stopFetchingImages() {
+        imageFetchingScope.cancel()
+    }
+
+    // newly added over
+
 
     private inner class cloudAnchorUploadedListener: CloudAnchorHandler.CloudAnchorListener {
         override fun onCloudTaskComplete(anchorName: String?, anchor: Anchor?) {
