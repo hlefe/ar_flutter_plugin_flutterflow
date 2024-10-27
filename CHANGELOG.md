@@ -1,4 +1,7 @@
 # Changelog
+## 0.7.49
+* Update description with running Flutterflow example
+
 ## 0.7.48
 * Updated kotlin version from 1.7.10 to 1.9.22
 * Used mavenCentral instead of jcenter 

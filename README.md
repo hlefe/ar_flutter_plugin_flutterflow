@@ -10,6 +10,8 @@ Key Features:
 
 FlutterFlow Compatibility: This version has been specifically adjusted to ensure seamless integration with FlutterFlow, enabling developers to incorporate augmented reality features into their FlutterFlow projects without any compatibility issues.
 
+🎉 You can find a complete example running on FlutterFlow here :
+https://app.flutterflow.io/project/a-r-flutter-lib-ipqw3k
 
 
 ## Original package
@@ -37,7 +39,7 @@ Or manually add this to your `pubspec.yaml` file (and run `flutter pub get`):
 
 ```yaml
 dependencies:
-  ar_flutter_plugin_flutterflow: ^0.7.48
+  ar_flutter_plugin_flutterflow: ^0.7.49
 ```
 
 ### Importing
