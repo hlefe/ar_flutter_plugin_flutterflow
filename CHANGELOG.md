@@ -1,4 +1,14 @@
 # Changelog
+## 0.7.48
+* Updated kotlin version from 1.7.10 to 1.9.22
+* Used mavenCentral instead of jcenter 
+* Updated gradle build tools from 4.1.0 to 8.3.0
+* Updated compileSdkVersion from 30 to 34
+* Added namespace and compileOptions
+* Updated Geolocator to version 12 
+* Added examples from the original plugin that are compatible with this new version of the plugin and flutterflow 
+* Updated instructions for creating "cloud Anchors" with flutterflow
+
 ## 0.7.47
 * Added the ability to hide or show surfaces after initialization using the function: arSessionManager.showPlanes(false/true);
 

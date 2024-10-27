@@ -62,9 +62,11 @@ The Google Cloud Anchor API is used by the plugin to upload, store and download 
      * Select ```cloudAnchorKey.json```  from the file manager.
      * A dialog will show up and ask you to select the targets, select the Runner target.
 
-## Set up Firebase
+## Set up Firebase 
 
 Google's Firebase cloud platform is used by the plugin's sample app to distribute and manage shared anchors and related content. If you want to use the included examples with shared AR experience features (e.g. the ```Cloud Anchors```example), the following setup steps are required (in your own apps, you can implement any method you like to distribute and manage the cloud anchor IDs that the plugin returns after uploading an anchor):
+
+⚠️ If you're using FlutterFlow, skip this (see below: "Set up Firebase with FlutterFlow.")
 
 1. Create a new project in the [Firebase console](https://console.firebase.google.com/project/_/overview)
 2. Register the Android part of your Flutter Application (based on the [FlutterFire Android Installation Guide](https://firebase.flutter.dev/docs/installation/android/)):
@@ -82,6 +84,10 @@ Google's Firebase cloud platform is used by the plugin's sample app to distribut
    * A dialog will show up and ask you to select the targets, select the Runner target.
 4. Enable Cloud Firestore for the project you created in step 1 (head to https://console.firebase.google.com/project/INSERT_YOUR_FIREBASE_PROJECT_NAME_HERE/firestore)
 
+## Set up Firebase with FlutterFlow.
+With FlutterFlow, you need to set up Firebase from "App Settings" -> "Firebase."
+The configuration is done automatically, so there's nothing else you need to do.
+
 ## Set up Location Services
 
 * On the iOS part of your app, add the following to your Info.plist file (located under ios/Runner) in order to access the device's location:
@@ -91,4 +97,13 @@ Google's Firebase cloud platform is used by the plugin's sample app to distribut
   <key>NSLocationAlwaysUsageDescription</key>
   <string>This app needs access to location when in the background.</string>
   ```
-   
+* If you're using FlutterFlow, go to "App Settings" > "Permissions" and add a new permission.  
+  Fill in the "iOS Permission Key" field and leave the "Android Permission Name" field empty.  
+
+  Add the following permissions:
+
+- **iOS Permission Key**: `NSLocationWhenInUseUsageDescription`  
+  **Permission Message**: This app needs access to location when open.
+
+- **iOS Permission Key**: `NSLocationAlwaysUsageDescription`  
+  **Permission Message**: This app needs access to location when in the background.
