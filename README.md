@@ -11,7 +11,7 @@ This fork was created because the original plugin had not been updated since 202
 To contribute code and discuss ideas, [create a pull request](https://github.com/hlefe/ar_flutter_plugin_flutterflow/compare), [open an issue](https://github.com/hlefe/ar_flutter_plugin_flutterflow/issues/new), or [start a discussion](https://github.com/hlefe/ar_flutter_plugin_flutterflow/discussions).
 
 ## Fluterflow demo app
-<table style="background-color:#FFFFE0;">
+<table>
 <td>
 <img src="https://avatars.githubusercontent.com/u/74943865?s=48&amp;v=4" width="30" height="30" style="max-width: 100%; margin-bottom: -9px;"> </img>
 </td>
