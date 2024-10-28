@@ -61,12 +61,12 @@ If you have problems with permissions on iOS (e.g. with the camera view not show
 In FlutterFlow :
 
 <table>
-<td>
+<td style="min-width:30px">
 <img src="https://avatars.githubusercontent.com/u/74943865?s=48&amp;v=4" width="30" height="30" style="max-width: 100%; margin-bottom: -9px;"> </img>
 </td>
 <td>
 Unfortunately, at this stage, it is not possible to carry out the procedure above within FlutterFlow. 
-Therefore, it is necessary to publish your project with github and make the modifications manually. <br> And then publish wih Github selected in Deployment Sources : <br> <a href="https://docs.flutterflow.io/customizing-your-app/manage-custom-code-in-github#id-9.-deploy-from-the-main-branch">FlutterFlow Publish from Github</a>)
+Therefore, it is necessary to publish your project with github and make the modifications manually. <br> And then publish wih Github selected in Deployment Sources : <br> <a href="https://docs.flutterflow.io/customizing-your-app/manage-custom-code-in-github#id-9.-deploy-from-the-main-branch">FlutterFlow Publish from Github</a>
 </td>
 </table>
 
