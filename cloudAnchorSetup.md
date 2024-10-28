@@ -66,12 +66,6 @@ The Google Cloud Anchor API is used by the plugin to upload, store and download 
 
 Google's Firebase cloud platform is used by the plugin's sample app to distribute and manage shared anchors and related content. If you want to use the included examples with shared AR experience features (e.g. the ```Cloud Anchors```example), the following setup steps are required (in your own apps, you can implement any method you like to distribute and manage the cloud anchor IDs that the plugin returns after uploading an anchor):
 
-<table>
-<td>
-<img src="https://avatars.githubusercontent.com/u/74943865?s=48&amp;v=4" width="30" height="30" style="max-width: 100%; margin-bottom: -9px;"> </img>
-</td>
-<td> <b> If you're using FlutterFlow, skip this (see below: "Set up Firebase with FlutterFlow.") </b></td></table>
-
 1. Create a new project in the [Firebase console](https://console.firebase.google.com/project/_/overview)
 2. Register the Android part of your Flutter Application (based on the [FlutterFire Android Installation Guide](https://firebase.flutter.dev/docs/installation/android/)):
    * Add a new Android app to your project and make sure the ```Android package name``` matches your local project's package name which can be found within the ```AndroidManifest.xml```
@@ -88,7 +82,6 @@ Google's Firebase cloud platform is used by the plugin's sample app to distribut
    * A dialog will show up and ask you to select the targets, select the Runner target.
 4. Enable Cloud Firestore for the project you created in step 1 (head to https://console.firebase.google.com/project/INSERT_YOUR_FIREBASE_PROJECT_NAME_HERE/firestore)
 
-## Set up Firebase with FlutterFlow.
 <table>
 <td>
 <img src="https://avatars.githubusercontent.com/u/74943865?s=48&amp;v=4" width="30" height="30" style="max-width: 100%; margin-bottom: -9px;"> </img>
