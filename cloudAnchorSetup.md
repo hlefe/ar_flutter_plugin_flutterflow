@@ -112,7 +112,7 @@ The configuration is done automatically, so there's nothing else you need to do.
 </td>
 <td><b> If you're using FlutterFlow, go to "App Settings" > "Permissions" and add a new permission.<br>
   Fill in the "iOS Permission Key" field and leave the "Android Permission Name" field empty.  </b><br>
-
+<br>
   Add the following permissions:
 
 - **iOS Permission Key**: `NSLocationWhenInUseUsageDescription`  
