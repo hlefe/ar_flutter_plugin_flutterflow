@@ -14,7 +14,7 @@ FlutterFlow Compatibility: This version has been specifically adjusted to ensure
 <img src="https://avatars.githubusercontent.com/u/74943865?s=48&amp;v=4" width="30" height="30" style="max-width: 100%; margin-bottom: -9px;"> </img>
 </td>
 <td>
-**You can find a complete example running on FlutterFlow here :**<br>
+<b> 🎉 You can find a complete example running on FlutterFlow here :</b><br>
 https://app.flutterflow.io/project/a-r-flutter-lib-ipqw3k
 </td>
 </table>
