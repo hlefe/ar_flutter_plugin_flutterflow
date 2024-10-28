@@ -83,12 +83,14 @@ Or manually add this to your `pubspec.yaml` file (and run `flutter pub get`):
 dependencies:
   ar_flutter_plugin_flutterflow: ^0.7.50
 ```
+
+Or in FlutterFlow : 
+
 <table>
 <td>
 <img src="https://avatars.githubusercontent.com/u/74943865?s=48&amp;v=4" width="30" height="30" style="max-width: 100%; margin-bottom: -9px;"> </img>
 </td>
-<td>
-<b>Flutterflow</b><br> Simply add : <br> <b>ar_flutter_plugin_flutterflow: ^0.7.50 </b> <br> in pubspecs dependencies of your widget.
+<td> Simply add : <br> <b>ar_flutter_plugin_flutterflow: ^0.7.50 </b> <br> in pubspecs dependencies of your widget.
 </td>
 </table>
 
