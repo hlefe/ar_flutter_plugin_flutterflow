@@ -7,7 +7,7 @@ This version is a direct adaptation of the original ar_flutter_plugin (https://p
 This fork was created because the original plugin had not been updated since 2022. <br><br>
 ➡ Changes include an update to the AR Core endpoint, a gradle upgrade, and compatibility with FlutterFlow.
 <br><br>
-<b>❤️ I invite you to collaborate and contribute to the improvement of this free plugin.</b>
+<b>❤️ I invite you to collaborate and contribute to the improvement of this plugin.</b><br>
 To contribute code and discuss ideas, [create a pull request](https://github.com/hlefe/ar_flutter_plugin_flutterflow/compare), [open an issue](https://github.com/hlefe/ar_flutter_plugin_flutterflow/issues/new), or [start a discussion](https://github.com/hlefe/ar_flutter_plugin_flutterflow/discussions).
 
 ## Fluterflow demo app
