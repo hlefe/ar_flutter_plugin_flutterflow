@@ -93,7 +93,7 @@ Google's Firebase cloud platform is used by the plugin's sample app to distribut
 <td>
 <img src="https://avatars.githubusercontent.com/u/74943865?s=48&amp;v=4" width="30" height="30" style="max-width: 100%; margin-bottom: -9px;"> </img>
 </td>
-<td> <b>With FlutterFlow, you need to set up Firebase from "App Settings" -> "Firebase."
+<td> <b>With FlutterFlow, you need to set up Firebase from "App Settings" -> "Firebase."<br>
 The configuration is done automatically, so there's nothing else you need to do.</b></td></table>
 
 ## Set up Location Services
@@ -105,12 +105,13 @@ The configuration is done automatically, so there's nothing else you need to do.
   <key>NSLocationAlwaysUsageDescription</key>
   <string>This app needs access to location when in the background.</string>
   ```
+  <br>
 <table>
 <td>
 <img src="https://avatars.githubusercontent.com/u/74943865?s=48&amp;v=4" width="30" height="30" style="max-width: 100%; margin-bottom: -9px;"> </img>
 </td>
-<td><b> If you're using FlutterFlow, go to "App Settings" > "Permissions" and add a new permission.
-  Fill in the "iOS Permission Key" field and leave the "Android Permission Name" field empty.  </b>
+<td><b> If you're using FlutterFlow, go to "App Settings" > "Permissions" and add a new permission.<br>
+  Fill in the "iOS Permission Key" field and leave the "Android Permission Name" field empty.  </b><br>
 
   Add the following permissions:
 
@@ -119,7 +120,9 @@ The configuration is done automatically, so there's nothing else you need to do.
 
 - **iOS Permission Key**: `NSLocationAlwaysUsageDescription`  
   **Permission Message**: This app needs access to location when in the background.
+
 </td></table>
+
 ## Disabling Minification in Release Mode:
 
 * ErrorNotAuthorized may appear in release mode when hosting anchors. 
