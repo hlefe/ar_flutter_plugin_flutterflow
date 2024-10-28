@@ -11,13 +11,13 @@ This fork was created because the original plugin had not been updated since 202
 To contribute code and discuss ideas, [create a pull request](https://github.com/hlefe/ar_flutter_plugin_flutterflow/compare), [open an issue](https://github.com/hlefe/ar_flutter_plugin_flutterflow/issues/new), or [start a discussion](https://github.com/hlefe/ar_flutter_plugin_flutterflow/discussions).
 
 ## Fluterflow demo app
-<table>
+<table style="background-color:#FFFFE0;">
 <td>
 <img src="https://avatars.githubusercontent.com/u/74943865?s=48&amp;v=4" width="30" height="30" style="max-width: 100%; margin-bottom: -9px;"> </img>
 </td>
 <td>
 <b> You can find a complete example running on FlutterFlow here :</b><br>
-https://app.flutterflow.io/project/a-r-flutter-lib-ipqw3k
+<a href="https://app.flutterflow.io/project/a-r-flutter-lib-ipqw3k">https://app.flutterflow.io/project/a-r-flutter-lib-ipqw3k</a>
 </td>
 </table>
 
@@ -121,4 +121,4 @@ Therefore, it is necessary to publish your project with github and make the modi
 
 This is a rough sketch of the architecture the plugin implements:
 
-![ar_plugin_architecture](./AR_Plugin_Architecture_highlevel.svg)
+![ar_plugin_architecture](https://github.com/CariusLars/ar_flutter_plugin/raw/main/AR_Plugin_Architecture_highlevel.svg)
