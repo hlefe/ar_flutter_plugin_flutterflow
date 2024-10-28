@@ -66,7 +66,7 @@ In FlutterFlow :
 </td>
 <td>
 Unfortunately, at this stage, it is not possible to carry out the procedure above within FlutterFlow. 
-Therefore, it is necessary to publish your project with github and make the modifications manually. <br> And then publish wih Github selected in Deployment Sources : <br> https://docs.flutterflow.io/customizing-your-app/manage-custom-code-in-github#id-9.-deploy-from-the-main-branch
+Therefore, it is necessary to publish your project with github and make the modifications manually. <br> And then publish wih Github selected in Deployment Sources : <br> [FlutterFlow Publish from Github](https://docs.flutterflow.io/customizing-your-app/manage-custom-code-in-github#id-9.-deploy-from-the-main-branch)
 </td>
 </table>
 
