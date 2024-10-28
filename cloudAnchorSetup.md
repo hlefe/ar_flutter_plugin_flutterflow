@@ -113,12 +113,10 @@ The configuration is done automatically, so there's nothing else you need to do.
 * ErrorNotAuthorized may appear in release mode when hosting anchors. 
   To resolve this issue, you need to disable code shrinking and minification by adding the following lines to your app/build.gradle:
 
-
-  ```gradle
 buildTypes {
 release {
 minifyEnabled false
 shrinkResources false
 }
 }
-  ```
+
