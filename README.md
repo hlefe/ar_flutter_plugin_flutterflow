@@ -8,6 +8,7 @@ This fork was created because the original plugin had not been updated since 202
 ➡ Changes include an update to the AR Core endpoint, a gradle upgrade, and compatibility with FlutterFlow.
 <br><br>
 <b>❤️ I invite you to collaborate and contribute to the improvement of this free plugin.</b>
+To contribute code and discuss ideas, [create a pull request](https://github.com/hlefe/ar_flutter_plugin_flutterflow/compare), [open an issue](https://github.com/hlefe/ar_flutter_plugin_flutterflow/issues/new), or [start a discussion](https://github.com/hlefe/ar_flutter_plugin_flutterflow/discussions).
 
 ## Fluterflow demo app
 <table>
@@ -115,9 +116,6 @@ import 'package:ar_flutter_plugin_flutterflow/ar_flutter_plugin.dart';
 | Cloud Anchors                | AR Scene in which objects can be placed, uploaded and downloaded, thus creating an interactive AR experience that can be shared between multiple devices. Currently, the example allows to upload the last placed object along with its anchor and download all anchors within a radius of 100m along with all the attached objects (independent of which device originally placed the objects). As sharing the objects is done by using the Google Cloud Anchor Service and Firebase, this requires some additional setup, please read [Getting Started with cloud anchors](cloudAnchorSetup.md)        | [Cloud Anchors Code](https://github.com/hlefe/ar_flutter_plugin_flutterflow/blob/main/examples/cloud_anchor.dart)                         |
 | External Object Management   | Similar to the Cloud Anchors example, but contains UI to choose between different models. Rather than being hard-coded, an external database (Firestore) is used to manage the available models. As sharing the objects is done by using the Google Cloud Anchor Service and Firebase, this requires some additional setup, please read [Getting Started with cloud anchors](cloudAnchorSetup.md). Also make sure that in your Firestore database, the collection "models" contains some entries with the fields "name", "image", and "uri", where "uri" points to the raw file of a model in GLB format | [External Model Management Code](https://github.com/hlefe/ar_flutter_plugin_flutterflow/blob/main/examples/external_model_management.dart) |
 
-## Contributing
-
-Contributions to this plugin are very welcome. To contribute code and discuss ideas, [create a pull request](https://github.com/hlefe/ar_flutter_plugin_flutterflow/compare), [open an issue](https://github.com/hlefe/ar_flutter_plugin_flutterflow/issues/new), or [start a discussion](https://github.com/hlefe/ar_flutter_plugin_flutterflow/discussions).
 
 ## Plugin Architecture
 
