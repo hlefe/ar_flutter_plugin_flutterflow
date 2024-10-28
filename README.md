@@ -88,7 +88,7 @@ dependencies:
 <img src="https://avatars.githubusercontent.com/u/74943865?s=48&amp;v=4" width="30" height="30" style="max-width: 100%; margin-bottom: -9px;"> </img>
 </td>
 <td>
-Flutterflow : simply add <b>ar_flutter_plugin_flutterflow: ^0.7.50 '''</b> in pubspecs dependencies of your widget.
+Flutterflow : simply add : <br> <b>ar_flutter_plugin_flutterflow: ^0.7.50 </b> <br> in pubspecs dependencies of your widget.
 </td>
 </table>
 
