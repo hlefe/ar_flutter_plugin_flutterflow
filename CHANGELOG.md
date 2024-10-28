@@ -1,4 +1,7 @@
 # Changelog
+## 0.7.52
+* Corrected the link to the explanatory diagram of the plugin architecture
+
 ## 0.7.51
 * Updated plugin installation instructions
 
