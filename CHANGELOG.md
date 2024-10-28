@@ -1,4 +1,7 @@
 # Changelog
+## 0.7.51
+* Updated plugin installation instructions
+
 ## 0.7.50
 * Added instructions to make cloud anchors work in release mode
 
