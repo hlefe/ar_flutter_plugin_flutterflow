@@ -114,7 +114,7 @@ The configuration is done automatically, so there's nothing else you need to do.
   To resolve this issue, you need to disable code shrinking and minification by adding the following lines to your app/build.gradle:
 
 
-  ```
+  ```gradle
 buildTypes {
 release {
 minifyEnabled false
