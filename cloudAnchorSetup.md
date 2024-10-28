@@ -107,3 +107,18 @@ The configuration is done automatically, so there's nothing else you need to do.
 
 - **iOS Permission Key**: `NSLocationAlwaysUsageDescription`  
   **Permission Message**: This app needs access to location when in the background.
+
+## Disabling Minification in Release Mode:
+
+* ErrorNotAuthorized may appear in release mode when hosting anchors. 
+  To resolve this issue, you need to disable code shrinking and minification by adding the following lines to your app/build.gradle:
+
+
+  ```
+buildTypes {
+release {
+minifyEnabled false
+shrinkResources false
+}
+}
+  ```

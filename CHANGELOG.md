@@ -1,4 +1,7 @@
 # Changelog
+## 0.7.50
+* Added instructions to make cloud anchors work in release mode
+
 ## 0.7.49
 * Update description with running Flutterflow example
 

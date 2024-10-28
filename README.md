@@ -10,7 +10,7 @@ Key Features:
 
 FlutterFlow Compatibility: This version has been specifically adjusted to ensure seamless integration with FlutterFlow, enabling developers to incorporate augmented reality features into their FlutterFlow projects without any compatibility issues.
 
-🎉 You can find a complete example running on FlutterFlow here :
+**🎉 You can find a complete example running on FlutterFlow here :**
 https://app.flutterflow.io/project/a-r-flutter-lib-ipqw3k
 
 
@@ -23,8 +23,6 @@ Unfortunately, at this stage, it is not possible to carry out this procedure wit
 
 ⚠️ If you're utilizing examples from the original plugin that involve the geoflutterfire package, please note that you'll need to use the geoflutterfire2 plugin instead, available at https://pub.dev/packages/geoflutterfire2.
 Also, remember to replace 'Geoflutterfire()' with 'GeoFlutterFire()' in your code to ensure proper functionality with this updated package.
-
-
 
 ### Installing
 
@@ -39,7 +37,7 @@ Or manually add this to your `pubspec.yaml` file (and run `flutter pub get`):
 
 ```yaml
 dependencies:
-  ar_flutter_plugin_flutterflow: ^0.7.49
+  ar_flutter_plugin_flutterflow: ^0.7.50
 ```
 
 ### Importing
