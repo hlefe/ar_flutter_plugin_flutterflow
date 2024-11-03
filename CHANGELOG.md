@@ -1,4 +1,8 @@
 # Changelog
+## 0.7.53
+* ARCore does not support Firebase 11.X and the new version of nanopb (info here: https://github.com/CariusLars/ar_flutter_plugin/issues/232). 
+* Temporary use of a fork of ARCore (ARCoreNanoPbUpdated 1.46.0.1) that implements this update while waiting for Google to update the official ARCore package.
+
 ## 0.7.52
 * Corrected the link to the explanatory diagram of the plugin architecture
 

@@ -20,7 +20,8 @@ A Flutter plugin for shared AR experiences supporting Android and iOS.
   s.static_framework = true
   #s.dependency 'ARCore/CloudAnchors', '~> 1.12.0'
   #s.dependency 'ARCore', '~> 1.2.0'
-  s.dependency 'ARCore/CloudAnchors', '~> 1.36.0' # Updated from 1.32 to 1.33 to support Apple Silicon, info here: https://github.com/google-ar/arcore-ios-sdk/issues/59#issuecomment-1219756010
+ # s.dependency 'ARCore/CloudAnchors', '~> 1.36.0'  # Updated from 1.32 to 1.33 to support Apple Silicon, info here: https://github.com/google-ar/arcore-ios-sdk/issues/59#issuecomment-1219756010
+  s.dependency 'ARCoreNanoPbUpdated/CloudAnchors', '~> 1.46.0.1' # ARCore does not support Firebase 11.X and the new version of nanopb (info here: https://github.com/CariusLars/ar_flutter_plugin/issues/232). Temporary use of a fork of ARCore that implements this update while waiting for Google to update the official ARCore package.
   s.platform = :ios, '13.0'
 
 
