@@ -67,7 +67,7 @@ import 'package:ar_flutter_plugin_flutterflow/ar_flutter_plugin.dart';
 <img src="https://avatars.githubusercontent.com/u/74943865?s=48&amp;v=4" width="30" height="30" style="max-width: 100%; margin-bottom: -9px;"> </img>
 </td>
 <td><b> If you're using FlutterFlow, go to "App Settings" > "Permissions"<br>
- For the "Camera" line, toggle the switch to "On" and add the description: Ex"This application requires access to the camera to enable augmented reality features."  </b><br>
+ For the "Camera" line, toggle the switch to "On" and add the description :<br> "This application requires access to the camera to enable augmented reality features."  </b><br>
 <br>
 
 </td></table>
