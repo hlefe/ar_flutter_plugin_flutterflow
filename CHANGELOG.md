@@ -1,4 +1,7 @@
 # Changelog
+## 0.7.55
+* Updated ARCoreNanoPbUpdated to version 1.46.0.2, resolving a conflict with GTMSessionFetcher.
+
 ## 0.7.54
 * Update README.md (adding instructions for ios Authorisations)
 
