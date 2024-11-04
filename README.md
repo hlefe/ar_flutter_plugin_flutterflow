@@ -54,6 +54,23 @@ Add this to your code:
 import 'package:ar_flutter_plugin_flutterflow/ar_flutter_plugin.dart';
 ```
 ## IOS Permissions
+* To prevent your application from crashing when launching augmented reality on iOS, you need to add the following permission to the Info.plist file (located under ios/Runner) :
+
+  ```
+  <key>NSCameraUsageDescription</key>
+  <string>This application requires camera access for augmented reality functionality.</string>
+  
+  ```
+  <br>
+<table>
+<td>
+<img src="https://avatars.githubusercontent.com/u/74943865?s=48&amp;v=4" width="30" height="30" style="max-width: 100%; margin-bottom: -9px;"> </img>
+</td>
+<td><b> If you're using FlutterFlow, go to "App Settings" > "Permissions"<br>
+ For the "Camera" line, toggle the switch to "On" and add the description: Ex"This application requires access to the camera to enable augmented reality features."  </b><br>
+<br>
+
+</td></table>
 
 If you have problems with permissions on iOS (e.g. with the camera view not showing up even though camera access is allowed), add this to the ```podfile``` of your app's ```ios``` directory:
 
