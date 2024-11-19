@@ -5,8 +5,9 @@
 
 This version is a direct adaptation of the original ar_flutter_plugin (https://pub.dev/packages/ar_flutter_plugin), maintaining all its powerful features and capabilities.
 This fork was created because the original plugin had not been updated since 2022. <br><br>
-➡ Changes include an update to the AR Core endpoint, a gradle upgrade, and compatibility with FlutterFlow.
-<br><br>
+➡ Changes include an update to the AR Core endpoint, a gradle upgrade, and compatibility with FlutterFlow.<br><br>
+🚀 I am working on moving away from Sceneform, which has been archived by Google, and instead using Sceneview Android version 2.2.1, which supports the latest versions of ARCore with Google Filament as the 3D engine. This offers support for model animations and many other improvements. You can follow the progress of this development on the [`sceneview-android`](https://github.com/hlefe/ar_flutter_plugin_flutterflow/tree/sceneview-android) branch and in [this pull request](https://github.com/hlefe/ar_flutter_plugin_flutterflow/pull/17).<br><br>
+
 <b>❤️ I invite you to collaborate and contribute to the improvement of this plugin.</b><br>
 To contribute code and discuss ideas, [create a pull request](https://github.com/hlefe/ar_flutter_plugin_flutterflow/compare), [open an issue](https://github.com/hlefe/ar_flutter_plugin_flutterflow/issues/new), or [start a discussion](https://github.com/hlefe/ar_flutter_plugin_flutterflow/discussions).
 
