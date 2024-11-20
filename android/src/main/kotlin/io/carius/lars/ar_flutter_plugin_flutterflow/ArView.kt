@@ -4,6 +4,7 @@ import android.app.Activity
 import android.content.Context
 import android.util.Log
 import android.view.View
+import android.view.LayoutInflater
 import android.widget.FrameLayout
 import androidx.lifecycle.Lifecycle
 import com.google.ar.core.Config
@@ -64,6 +65,7 @@ class ArView(
     private val TAG = "ArView"
     private var sceneView: ARSceneView
     private val mainScope = CoroutineScope(Dispatchers.Main)
+    private val rootLayout = FrameLayout(context)
     
     private val sessionChannel = MethodChannel(messenger, "arsession_$id")
     private val objectChannel = MethodChannel(messenger, "arobjects_$id")
@@ -73,6 +75,7 @@ class ArView(
     private var selectedNode: Node? = null
     private val detectedPlanes = mutableSetOf<Plane>()
     private val anchorNodesMap = mutableMapOf<String, AnchorNode>()
+    private var showAnimatedGuide = false
 
     init {
         sceneView = ARSceneView(context, sharedLifecycle = lifecycle).apply {
@@ -96,6 +99,19 @@ class ArView(
             }
             onFrame = { frameTime ->
                 session?.update()?.let { frame ->
+                    // Vérifier et masquer le guide animé si nécessaire
+                    if (showAnimatedGuide) {
+                        frame.getUpdatedTrackables(Plane::class.java).forEach { plane ->
+                            if (plane.trackingState == TrackingState.TRACKING) {
+                                // Trouver et supprimer le layout de guide
+                                rootLayout.findViewWithTag<View>("hand_motion_layout")?.let { handMotionLayout ->
+                                    rootLayout.removeView(handMotionLayout)
+                                    showAnimatedGuide = false
+                                }
+                            }
+                        }
+                    }
+
                     frame.getUpdatedTrackables(Plane::class.java).forEach { plane ->
                         if (plane.trackingState == TrackingState.TRACKING && 
                             !detectedPlanes.contains(plane)) {
@@ -110,8 +126,22 @@ class ArView(
             setOnGestureListener(
                 onSingleTapConfirmed = { motionEvent: MotionEvent, node: Node? ->
                     if (node != null) {
+                        var anchorName: String? = null
+                        var currentNode: Node? = node
+                        // Remonter la hiérarchie des nodes jusqu'à trouver une AnchorNode
+                        while (currentNode != null) {
+                            // Chercher dans notre map d'ancres
+                            anchorNodesMap.forEach { (name, anchorNode) ->
+                                if (currentNode == anchorNode) {
+                                    anchorName = name
+                                    return@forEach
+                                }
+                            }
+                            if (anchorName != null) break
+                            currentNode = currentNode.parent
+                        }
                         // Tap sur un node
-                        //objectChannel.invokeMethod("onNodeTap", listOf(node.name))
+                        objectChannel.invokeMethod("onNodeTap", listOf(anchorName))
                         true
                     } else {
                         // Tap sur un plan
@@ -143,12 +173,14 @@ class ArView(
             )
         }
 
-        sceneView.layoutParams = FrameLayout.LayoutParams(
-            FrameLayout.LayoutParams.MATCH_PARENT,
-            FrameLayout.LayoutParams.MATCH_PARENT
-        )
-        sceneView.keepScreenOn = true
-        
+        rootLayout.apply {
+            layoutParams = FrameLayout.LayoutParams(
+                FrameLayout.LayoutParams.MATCH_PARENT,
+                FrameLayout.LayoutParams.MATCH_PARENT
+            )
+            addView(sceneView)
+        }
+
         sessionChannel.setMethodCallHandler(this)
         objectChannel.setMethodCallHandler(this)
         anchorChannel.setMethodCallHandler(this)
@@ -253,7 +285,7 @@ class ArView(
             "init" -> {
                 try {
                     Log.i(TAG, "init c'est vraiment bon")
-                    val showAnimatedGuide = call.argument<Boolean>("showAnimatedGuide") ?: true
+                    val argShowAnimatedGuide = call.argument<Boolean>("showAnimatedGuide") ?: true
                     val showFeaturePoints = call.argument<Boolean>("showFeaturePoints") ?: false
                     val showPlanes = call.argument<Boolean>("showPlanes") ?: true
                     val customPlaneTexturePath = call.argument<String>("customPlaneTexturePath")
@@ -262,8 +294,21 @@ class ArView(
                     val handlePans = call.argument<Boolean>("handlePans") ?: false
                     val handleRotation = call.argument<Boolean>("handleRotation") ?: false
                     sceneView.apply {
-                                    planeRenderer.isEnabled = true
-            planeRenderer.isVisible = true
+
+                        // Configure Plane scanning guide
+        if (argShowAnimatedGuide == true) { 
+            showAnimatedGuide = true
+            val handMotionLayout = LayoutInflater.from(context)
+                .inflate(R.layout.sceneform_hand_layout, rootLayout, false)
+                .apply {
+                    tag = "hand_motion_layout"
+                }
+            rootLayout.addView(handMotionLayout)
+        }
+
+
+            planeRenderer.isEnabled = showPlanes
+            planeRenderer.isVisible = showPlanes
 
             if (customPlaneTexturePath != null) {
                 try {
@@ -467,21 +512,13 @@ class ArView(
 
     private fun handleRemoveAnchor(call: MethodCall, result: MethodChannel.Result) {
         try {
-            val anchorId = call.argument<String>("anchorId")
-            if (anchorId == null) {
-                result.error("INVALID_ARGUMENT", "Anchor ID is required", null)
-                return
+            val anchorName: String? = call.argument<String>("name")
+            val anchor = anchorNodesMap[anchorName]
+            if (anchor != null) {
+                sceneView.removeChildNode(anchor)
+                anchor.anchor?.detach()
+                result.success(null)
             }
-
-            // Trouver et supprimer l'ancre
-            sceneView.childNodes
-                .filterIsInstance<AnchorNode>()
-                .find { node -> node.anchor?.cloudAnchorId == anchorId }
-                ?.let { anchorNode ->
-                    sceneView.removeChildNode(anchorNode)
-                    anchorNode.anchor?.detach()
-                    result.success(null)
-                } ?: result.error("ANCHOR_NOT_FOUND", "Anchor with ID $anchorId not found", null)
         } catch (e: Exception) {
             result.error("REMOVE_ANCHOR_ERROR", e.message, null)
         }
@@ -584,8 +621,10 @@ class ArView(
 
     private fun handleShowPlanes(call: MethodCall, result: MethodChannel.Result) {
         try {
-            val showPlanes = call.argument<Boolean>("showPlanes") ?: true
-            sceneView.planeRenderer.isEnabled = showPlanes
+            val showPlanes = call.argument<Boolean>("showPlanes") ?: false
+            sceneView.apply {
+                planeRenderer.isEnabled = showPlanes
+            }
             result.success(null)
         } catch (e: Exception) {
             result.error("SHOW_PLANES_ERROR", e.message, null)
@@ -657,7 +696,7 @@ class ArView(
 
     override fun getView(): View {
         Log.i(TAG, "getView")
-        return sceneView
+        return rootLayout
     }
 
     override fun dispose() {
