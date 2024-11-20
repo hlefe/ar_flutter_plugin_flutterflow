@@ -49,6 +49,10 @@ import io.github.sceneview.math.Transform
 import io.carius.lars.ar_flutter_plugin_flutterflow.Serialization.serializeHitResult
 import io.carius.lars.ar_flutter_plugin_flutterflow.Serialization.deserializeMatrix4
 import io.github.sceneview.math.Position
+import io.github.sceneview.texture.ImageTexture
+import io.github.sceneview.material.setTexture
+import io.github.sceneview.ar.scene.PlaneRenderer
+import io.flutter.FlutterInjector
 
 class ArView(
     context: Context,
@@ -64,57 +68,32 @@ class ArView(
     private val sessionChannel = MethodChannel(messenger, "arsession_$id")
     private val objectChannel = MethodChannel(messenger, "arobjects_$id")
     private val anchorChannel = MethodChannel(messenger, "aranchors_$id")
-
-    // Ajout d'une Map pour stocker les nodes
     private val nodesMap = mutableMapOf<String, ModelNode>()
-
-    // Ajout d'une variable pour suivre le nombre de plans
     private var planeCount = 0
-
-    // Ajouter cette propriété pour suivre le node sélectionné
     private var selectedNode: Node? = null
-
-    // Ajouter cette propriété à la classe
     private val detectedPlanes = mutableSetOf<Plane>()
-
-    // Ajout d'une Map pour suivre les AnchorNodes
     private val anchorNodesMap = mutableMapOf<String, AnchorNode>()
 
     init {
-        Log.i(TAG, "init")
         sceneView = ARSceneView(context, sharedLifecycle = lifecycle).apply {
-            // Configuration de base
-            planeRenderer.isEnabled = true
-            
-            // Configuration de la session AR selon les exemples
             configureSession { session, config ->
-                // Configuration du tracking des plans
                 config.planeFindingMode = Config.PlaneFindingMode.HORIZONTAL_AND_VERTICAL
-                
-                // Configuration de la profondeur
                 config.depthMode = when (session.isDepthModeSupported(Config.DepthMode.AUTOMATIC)) {
                     true -> Config.DepthMode.AUTOMATIC
                     else -> Config.DepthMode.DISABLED
                 }
-                
-                // Désactiver le placement instantané qui peut causer des problèmes de tracking
                 config.instantPlacementMode = Config.InstantPlacementMode.DISABLED
-                
-                // Configuration de l'estimation de lumière
                 config.lightEstimationMode = Config.LightEstimationMode.ENVIRONMENTAL_HDR
-                
-                // Activer le focus automatique
                 config.focusMode = Config.FocusMode.AUTO
             }
-            
-            // Gestion des erreurs de tracking
+             environment = environmentLoader.createHDREnvironment(
+                    assetFileLocation = "environments/evening_meadow_2k.hdr"
+                )!!
             onTrackingFailureChanged = { reason ->
                 mainScope.launch {
                     sessionChannel.invokeMethod("onTrackingFailure", reason?.name)
                 }
             }
-            
-            // Gestion des plans
             onFrame = { frameTime ->
                 session?.update()?.let { frame ->
                     frame.getUpdatedTrackables(Plane::class.java).forEach { plane ->
@@ -128,8 +107,6 @@ class ArView(
                     }
                 }
             }
-
-            // Gestion des taps avec ARCore
             setOnGestureListener(
                 onSingleTapConfirmed = { motionEvent: MotionEvent, node: Node? ->
                     if (node != null) {
@@ -158,12 +135,6 @@ class ArView(
                                     )
                                 )
                             }
-                            
-                            // Debug des plane hits
-                            Log.d("ArView", "Plane hits count: ${planeHits.size}")
-                            Log.d("ArView", "Plane hits content: $planeHits")
-                            
-                            // Toujours envoyer les résultats, même si la liste est vide
                             notifyPlaneOrPointTap(planeHits)
                         }
                         true
@@ -203,7 +174,9 @@ class ArView(
                     
                 ).apply {
                     isEditable = true
-                    //playAnimation(0)
+                     isPositionEditable = true
+                isRotationEditable = true
+                isScaleEditable = true
                 }
             } ?: run {
                 null
@@ -259,8 +232,6 @@ class ArView(
 
             mainScope.launch {
                 val node = buildModelNode(nodeData) ?: return@launch
-                
-                // Créer un HitResultNode avec la position écran spécifiée
                 val hitResultNode = HitResultNode(
                     engine = sceneView.engine,
                     xPx = screenPosition["x"]?.toFloat() ?: 0f,
@@ -290,21 +261,28 @@ class ArView(
                     val handleTaps = call.argument<Boolean>("handleTaps") ?: true
                     val handlePans = call.argument<Boolean>("handlePans") ?: false
                     val handleRotation = call.argument<Boolean>("handleRotation") ?: false
-                    
                     sceneView.apply {
-                        configureSession { session, config ->
-                            config.apply {
-                                lightEstimationMode = Config.LightEstimationMode.ENVIRONMENTAL_HDR
-                                depthMode = when (session.isDepthModeSupported(Config.DepthMode.AUTOMATIC)) {
-                                    true -> Config.DepthMode.AUTOMATIC
-                                    else -> Config.DepthMode.DISABLED
-                                }
-                                instantPlacementMode = Config.InstantPlacementMode.DISABLED
-                                planeFindingMode = Config.PlaneFindingMode.HORIZONTAL
-                                focusMode = Config.FocusMode.AUTO
-                                cloudAnchorMode = Config.CloudAnchorMode.ENABLED
-                            }
-                        }
+                                    planeRenderer.isEnabled = true
+            planeRenderer.isVisible = true
+
+            if (customPlaneTexturePath != null) {
+                try {
+                    val loader = FlutterInjector.instance().flutterLoader()
+                    val assetKey = loader.getLookupKeyForAsset(customPlaneTexturePath)
+                    val customPlaneTexture = ImageTexture.Builder()
+                        .bitmap(materialLoader.assets, assetKey)
+                        .build(engine)
+                    planeRenderer.planeMaterial.defaultInstance.apply {
+                        setTexture(PlaneRenderer.MATERIAL_TEXTURE, customPlaneTexture)
+                    }
+                } catch (e: Exception) {
+                    Log.e(TAG, "❌ Erreur lors de l'application de la texture personnalisée: ${e.message}")
+                    Log.e(TAG, "Stack trace:", e)
+                }
+            } else {
+                Log.i(TAG, "ℹ️ Utilisation de la texture par défaut")
+            }
+                        
                     }
                     result.success(null)
                 } catch (e: Exception) {
@@ -363,7 +341,6 @@ class ArView(
 
                     nodesMap[nodeId]?.let { node ->
                         if (node is ModelNode) {
-                            // Create Position, Rotation, and Scale objects
                             val newPosition = position?.let {
                                 ScenePosition(
                                     x = (it["x"] ?: 0.0).toFloat(),
