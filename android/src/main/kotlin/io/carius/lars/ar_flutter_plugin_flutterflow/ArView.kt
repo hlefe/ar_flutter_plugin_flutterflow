@@ -46,6 +46,12 @@ import io.github.sceneview.texture.ImageTexture
 import io.github.sceneview.material.setTexture
 import io.github.sceneview.ar.scene.PlaneRenderer
 import io.flutter.FlutterInjector
+import io.github.sceneview.node.CylinderNode
+import io.github.sceneview.math.Direction
+import io.github.sceneview.math.Rotation
+import io.github.sceneview.math.Scale
+import io.github.sceneview.math.colorOf
+import io.github.sceneview.loaders.MaterialLoader
 
 class ArView(
     context: Context,
@@ -74,6 +80,7 @@ class ArView(
     private var lastPointCloudTimestamp: Long? = null
     private var lastPointCloudFrame: Frame? = null
     private var pointCloudModelInstances = mutableListOf<ModelInstance>()
+    private var worldOriginNode: Node? = null
 
     private class PointCloudNode(
         modelInstance: ModelInstance,
@@ -271,6 +278,9 @@ class ArView(
             val handlePans = call.argument<Boolean>("handlePans") ?: false
             val handleRotation = call.argument<Boolean>("handleRotation") ?: false
 
+            
+            handleShowWorldOrigin(showWorldOrigin)
+            
             sceneView.apply {
                 // Configure la session AR
                 configureSession { session, config ->
@@ -962,4 +972,88 @@ class ArView(
         sceneView.removeChildNode(pointCloudNode)
         pointCloudNode.destroy()
     }
+
+    private fun makeWorldOriginNode(context: Context): Node {
+        val axisSize = 0.1f
+        val axisRadius = 0.005f
+        
+        // Utilisation de l'engine de sceneView
+        val engine = sceneView.engine
+        val materialLoader = MaterialLoader(engine, context)
+        
+        // Création du noeud racine
+        val rootNode = Node(engine = engine)
+        
+        // Création des cylindres avec leurs matériaux respectifs
+        val xNode = CylinderNode(
+            engine = engine,
+            radius = axisRadius,
+            height = axisSize,
+            materialInstance = materialLoader.createColorInstance(
+                color = colorOf(1f, 0f, 0f, 1f),
+                metallic = 0.0f,
+                roughness = 0.4f
+            )
+        )
+        
+        val yNode = CylinderNode(
+            engine = engine,
+            radius = axisRadius,
+            height = axisSize,
+            materialInstance = materialLoader.createColorInstance(
+                color = colorOf(0f, 1f, 0f, 1f),
+                metallic = 0.0f,
+                roughness = 0.4f
+            )
+        )
+        
+        val zNode = CylinderNode(
+            engine = engine,
+            radius = axisRadius,
+            height = axisSize,
+            materialInstance = materialLoader.createColorInstance(
+                color = colorOf(0f, 0f, 1f, 1f),
+                metallic = 0.0f,
+                roughness = 0.4f
+            )
+        )
+
+        rootNode.addChildNode(xNode)
+        rootNode.addChildNode(yNode)
+        rootNode.addChildNode(zNode)
+
+        // Positionnement des axes
+        xNode.position = Position(axisSize / 2, 0f, 0f)
+        xNode.rotation = Rotation(0f, 0f, 90f)  // Rotation autour de l'axe Z
+
+        yNode.position = Position(0f, axisSize / 2, 0f)
+        // Pas besoin de rotation pour l'axe Y car il est déjà orienté correctement
+
+        zNode.position = Position(0f, 0f, axisSize / 2)
+        zNode.rotation = Rotation(90f, 0f, 0f)  // Rotation autour de l'axe X
+
+        return rootNode
+    }
+
+    private fun handleShowWorldOrigin(show: Boolean) {
+        if (show) {
+            // Création du nouveau node seulement si nécessaire
+            if (worldOriginNode == null) {
+                worldOriginNode = makeWorldOriginNode(viewContext)
+            }
+            // Utilisation du safe call operator
+            worldOriginNode?.let { node ->
+                sceneView.addChildNode(node)
+            }
+        } else {
+            // Utilisation du safe call operator
+            worldOriginNode?.let { node ->
+                sceneView.removeChildNode(node)
+            }
+            // Optionnel : remettre à null après suppression
+            worldOriginNode = null
+        }
+    }
+
+    
 }
