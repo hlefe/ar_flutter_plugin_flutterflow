@@ -10,6 +10,7 @@ import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.PixelCopy
 import android.view.View
+import android.view.ViewGroup
 import android.widget.FrameLayout
 import androidx.lifecycle.Lifecycle
 import com.google.ar.core.Anchor.CloudAnchorState
@@ -56,7 +57,7 @@ import io.github.sceneview.loaders.MaterialLoader
 class ArView(
     context: Context,
     private val activity: Activity,
-    lifecycle: Lifecycle,
+    private val lifecycle: Lifecycle,
     messenger: BinaryMessenger,
     id: Int,
 ) : PlatformView {
@@ -64,7 +65,9 @@ class ArView(
     private val viewContext: Context = context
     private var sceneView: ARSceneView
     private val mainScope = CoroutineScope(Dispatchers.Main)
-    private val rootLayout = FrameLayout(context)
+    private var worldOriginNode: Node? = null
+
+    private val rootLayout: ViewGroup = FrameLayout(context)
 
     private val sessionChannel: MethodChannel = MethodChannel(messenger, "arsession_$id")
     private val objectChannel: MethodChannel = MethodChannel(messenger, "arobjects_$id")
@@ -80,7 +83,6 @@ class ArView(
     private var lastPointCloudTimestamp: Long? = null
     private var lastPointCloudFrame: Frame? = null
     private var pointCloudModelInstances = mutableListOf<ModelInstance>()
-    private var worldOriginNode: Node? = null
 
     private class PointCloudNode(
         modelInstance: ModelInstance,
@@ -145,18 +147,21 @@ class ArView(
         }
 
     init {
-        sceneView =
-            ARSceneView(context, sharedLifecycle = lifecycle).apply {
+        sceneView = ARSceneView(
+            context = viewContext,
+            sharedLifecycle = lifecycle,
+            sessionConfiguration = { session, config ->
+                config.apply {
+                    depthMode = Config.DepthMode.DISABLED
+                    instantPlacementMode = Config.InstantPlacementMode.DISABLED
+                    lightEstimationMode = Config.LightEstimationMode.ENVIRONMENTAL_HDR
+                    focusMode = Config.FocusMode.AUTO
+                    planeFindingMode = Config.PlaneFindingMode.DISABLED
+                }
             }
-
-        rootLayout.apply {
-            layoutParams =
-                FrameLayout.LayoutParams(
-                    FrameLayout.LayoutParams.MATCH_PARENT,
-                    FrameLayout.LayoutParams.MATCH_PARENT,
-                )
-            addView(sceneView)
-        }
+        )
+        
+        rootLayout.addView(sceneView)
 
         sessionChannel.setMethodCallHandler(onSessionMethodCall)
         objectChannel.setMethodCallHandler(onObjectMethodCall)
@@ -271,6 +276,7 @@ class ArView(
         try {
             val argShowAnimatedGuide = call.argument<Boolean>("showAnimatedGuide") ?: true
             val argShowFeaturePoints = call.argument<Boolean>("showFeaturePoints") ?: false
+            val argPlaneDetectionConfig: Int? = call.argument<Int>("planeDetectionConfig")
             val argShowPlanes = call.argument<Boolean>("showPlanes") ?: true
             val customPlaneTexturePath = call.argument<String>("customPlaneTexturePath")
             val showWorldOrigin = call.argument<Boolean>("showWorldOrigin") ?: false
@@ -278,28 +284,32 @@ class ArView(
             val handlePans = call.argument<Boolean>("handlePans") ?: false
             val handleRotation = call.argument<Boolean>("handleRotation") ?: false
 
-            
+            sceneView.session?.let { session ->
+                session.configure(session.config.apply {
+                    depthMode = when (session.isDepthModeSupported(Config.DepthMode.AUTOMATIC)) {
+                        true -> Config.DepthMode.AUTOMATIC
+                        else -> Config.DepthMode.DISABLED
+                    }
+                    planeFindingMode = when (argPlaneDetectionConfig) {
+                        1 -> Config.PlaneFindingMode.HORIZONTAL
+                        2 -> Config.PlaneFindingMode.VERTICAL
+                        3 -> Config.PlaneFindingMode.HORIZONTAL_AND_VERTICAL
+                        else -> Config.PlaneFindingMode.DISABLED
+                    }
+                })
+            }
+
             handleShowWorldOrigin(showWorldOrigin)
             
             sceneView.apply {
-                // Configure la session AR
-                configureSession { session, config ->
-                    config.planeFindingMode = Config.PlaneFindingMode.HORIZONTAL_AND_VERTICAL
-                    config.depthMode =
-                        when (session.isDepthModeSupported(Config.DepthMode.AUTOMATIC)) {
-                            true -> Config.DepthMode.AUTOMATIC
-                            else -> Config.DepthMode.DISABLED
-                        }
-                    config.instantPlacementMode = Config.InstantPlacementMode.DISABLED
-                    config.lightEstimationMode = Config.LightEstimationMode.ENVIRONMENTAL_HDR
-                    config.focusMode = Config.FocusMode.AUTO
-                }
-
                 environment = environmentLoader.createHDREnvironment(
                     assetFileLocation = "environments/evening_meadow_2k.hdr"
                 )!!
 
-                // Gestion des erreurs de tracking
+                planeRenderer.isEnabled = argShowPlanes
+                planeRenderer.isVisible = argShowPlanes
+                planeRenderer.planeRendererMode = PlaneRenderer.PlaneRendererMode.RENDER_ALL
+
                 onTrackingFailureChanged = { reason ->
                     mainScope.launch {
                         sessionChannel.invokeMethod("onTrackingFailure", reason?.name)
@@ -313,14 +323,11 @@ class ArView(
                     pointCloudNodes.toList().forEach { removePointCloudNode(it) }
                 }
 
-                // Gestion des frames
                 onFrame = { frameTime ->
                     session?.update()?.let { frame ->
-                        // Vérifier et masquer le guide animé si nécessaire
                         if (showAnimatedGuide) {
                             frame.getUpdatedTrackables(Plane::class.java).forEach { plane ->
                                 if (plane.trackingState == TrackingState.TRACKING) {
-                                    // Trouver et supprimer le layout de guide
                                     rootLayout.findViewWithTag<View>("hand_motion_layout")?.let { handMotionLayout ->
                                         rootLayout.removeView(handMotionLayout)
                                         showAnimatedGuide = false
@@ -329,7 +336,6 @@ class ArView(
                             }
                         }
 
-                        // Gestion des points caractéristiques
                         if (showFeaturePoints) {
                             val currentFps = frame.fps(lastPointCloudFrame)
                             if (currentFps < 10) {
@@ -340,7 +346,6 @@ class ArView(
 
                                         val pointsSize = pointCloud.ids?.limit() ?: 0
 
-                                        // Nettoyer les anciens points
                                         if (pointCloudNodes.isNotEmpty()) {
                                         }
                                         pointCloudNodes.toList().forEach { removePointCloudNode(it) }
@@ -364,7 +369,6 @@ class ArView(
                             }
                         }
 
-                        // Plane detected
                         frame.getUpdatedTrackables(Plane::class.java).forEach { plane ->
                             if (plane.trackingState == TrackingState.TRACKING &&
                                 !detectedPlanes.contains(plane)
@@ -378,15 +382,12 @@ class ArView(
                     }
                 }
 
-                // Gestion des gestes
                 setOnGestureListener(
                     onSingleTapConfirmed = { motionEvent: MotionEvent, node: Node? ->
                         if (node != null) {
                             var anchorName: String? = null
                             var currentNode: Node? = node
-                            // Remonter la hiérarchie des nodes jusqu'à trouver une AnchorNode
                             while (currentNode != null) {
-                                // Chercher dans notre map d'ancres
                                 anchorNodesMap.forEach { (name, anchorNode) ->
                                     if (currentNode == anchorNode) {
                                         anchorName = name
@@ -396,15 +397,12 @@ class ArView(
                                 if (anchorName != null) break
                                 currentNode = currentNode.parent
                             }
-                            // Tap sur un node
                             objectChannel.invokeMethod("onNodeTap", listOf(anchorName))
                             true
                         } else {
-                            // Tap sur un plan
                             session?.update()?.let { frame ->
                                 val hitResults = frame.hitTest(motionEvent)
 
-                                // Debug des hit results
                                 Log.d("ArView", "Hit Results count: ${hitResults.size}")
 
                                 val planeHits =
@@ -431,7 +429,6 @@ class ArView(
                     },
                 )
 
-                // Configure Plane scanning guide
                 if (argShowAnimatedGuide == true && showAnimatedGuide == true) {
                     val handMotionLayout =
                         LayoutInflater
@@ -443,7 +440,6 @@ class ArView(
                     rootLayout.addView(handMotionLayout)
                 }
 
-                // Gestion de la texture personnalisée
                 if (customPlaneTexturePath != null) {
                     try {
                         val loader = FlutterInjector.instance().flutterLoader()
@@ -463,9 +459,6 @@ class ArView(
                 } else {
                     Log.i(TAG, "ℹ️ Utilisation de la texture par défaut")
                 }
-
-                planeRenderer.isEnabled = argShowPlanes
-                planeRenderer.isVisible = argShowPlanes
             }
             result.success(null)
         } catch (e: Exception) {
@@ -856,10 +849,7 @@ class ArView(
         }
     }
 
-    override fun getView(): View {
-        Log.i(TAG, "getView")
-        return rootLayout
-    }
+    override fun getView(): View = rootLayout
 
     override fun dispose() {
         Log.i(TAG, "dispose")
