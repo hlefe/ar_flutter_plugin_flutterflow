@@ -171,7 +171,13 @@ class ArView(
     
 
     private suspend fun buildModelNode(nodeData: Map<String, Any>): ModelNode? {
-        val fileLocation = nodeData["uri"] as? String
+        var fileLocation = nodeData["uri"] as? String
+        
+        if (fileLocation != null && !fileLocation.startsWith("http://") && !fileLocation.startsWith("https://")) {
+            val loader = FlutterInjector.instance().flutterLoader()
+            fileLocation = loader.getLookupKeyForAsset(fileLocation)
+        }
+        
         if (fileLocation == null) {
             return null
         }
