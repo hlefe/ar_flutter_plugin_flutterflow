@@ -161,6 +161,9 @@ class ArView(
             }
         )
         
+        val gestureHandler = GestureHandler(sceneView, objectChannel)
+        sceneView.setOnTouchListener(gestureHandler)
+        
         rootLayout.addView(sceneView)
 
         sessionChannel.setMethodCallHandler(onSessionMethodCall)
@@ -232,30 +235,29 @@ class ArView(
             val dict_node = nodeData?.get("node") as? Map<String, Any>
             val dict_anchor = nodeData?.get("anchor") as? Map<String, Any>
             if (dict_node == null || dict_anchor == null) {
-                result.error("INVALID_ARGUMENT", "Node or anchor data is null", null)
+                result.success(false)
                 return
             }
 
             val anchorName = dict_anchor["name"] as? String
             val anchorNode = anchorNodesMap[anchorName]
             if (anchorNode != null) {
-                sceneView.addChildNode(
-                    anchorNode.apply {
-                        isEditable = true
-                        mainScope.launch {
-                            buildModelNode(dict_node)?.let {
-                                addChildNode(it)
-                            }
-                        }
-                    },
-                )
+                mainScope.launch {
+                    try {
+                        buildModelNode(dict_node)?.let { node ->
+                            anchorNode.addChildNode(node)
+                            sceneView.addChildNode(anchorNode)
+                            result.success(true)
+                        } ?: result.success(false)
+                    } catch (e: Exception) {
+                        result.success(false)
+                    }
+                }
             } else {
-                Log.e(TAG, "❌ Erreur: AnchorNode non trouvé pour le nom: $anchorName")
+                result.success(false)
             }
         } catch (e: Exception) {
-            Log.e(TAG, "❌ Exception dans handleAddNodeToPlaneAnchor: ${e.message}")
-            e.printStackTrace()
-            result.error("ADD_NODE_TO_PLANE_ERROR", e.message, null)
+            result.success(false)
         }
     }
 
@@ -502,11 +504,11 @@ class ArView(
                     }
                     result.success(true)
                 } else {
-                    result.error("NODE_CREATION_FAILED", "Failed to create node", null)
+                    result.success(false)
                 }
             }
         } catch (e: Exception) {
-            result.error("ADD_NODE_ERROR", e.message, null)
+            result.success(false)
         }
     }
 
