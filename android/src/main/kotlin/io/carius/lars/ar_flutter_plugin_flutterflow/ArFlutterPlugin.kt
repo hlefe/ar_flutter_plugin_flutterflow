@@ -1,59 +1,66 @@
 package io.carius.lars.ar_flutter_plugin_flutterflow
 
-import androidx.annotation.NonNull
+import android.app.Activity
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleOwner
 import io.flutter.embedding.engine.plugins.FlutterPlugin
-import io.flutter.embedding.engine.plugins.FlutterPlugin.FlutterPluginBinding
 import io.flutter.embedding.engine.plugins.activity.ActivityAware
 import io.flutter.embedding.engine.plugins.activity.ActivityPluginBinding
-import io.flutter.plugin.common.MethodCall
-import io.flutter.plugin.common.MethodChannel
-import io.flutter.plugin.common.MethodChannel.MethodCallHandler
-import io.flutter.plugin.common.MethodChannel.Result
 
-/** ArFlutterPlugin */
-class ArFlutterPlugin : FlutterPlugin, MethodCallHandler, ActivityAware {
-  /// The MethodChannel that will the communication between Flutter and native Android
-  ///
-  /// This local reference serves to register the plugin with the Flutter Engine and unregister it
-  /// when the Flutter Engine is detached from the Activity
-  private lateinit var channel: MethodChannel
-  private lateinit var flutterPluginBinding: FlutterPlugin.FlutterPluginBinding
+class ArFlutterPlugin: FlutterPlugin, ActivityAware {
+    private var activity: Activity? = null
+    private var lifecycle: Lifecycle? = null
+    private var flutterPluginBinding: FlutterPlugin.FlutterPluginBinding? = null
 
-  override fun onAttachedToEngine(
-      @NonNull flutterPluginBinding: FlutterPlugin.FlutterPluginBinding
-  ) {
-    channel = MethodChannel(flutterPluginBinding.binaryMessenger, "ar_flutter_plugin_flutterflow")
-    channel.setMethodCallHandler(this)
-
-    this.flutterPluginBinding = flutterPluginBinding
-  }
-
-  override fun onMethodCall(@NonNull call: MethodCall, @NonNull result: Result) {
-    if (call.method == "getPlatformVersion") {
-      result.success("Android ${android.os.Build.VERSION.RELEASE}")
-    } else {
-      result.notImplemented()
+    override fun onAttachedToEngine(binding: FlutterPlugin.FlutterPluginBinding) {
+        flutterPluginBinding = binding
     }
-  }
 
-  override fun onDetachedFromEngine(@NonNull binding: FlutterPlugin.FlutterPluginBinding) {
-    channel.setMethodCallHandler(null)
-  }
+    override fun onDetachedFromEngine(binding: FlutterPlugin.FlutterPluginBinding) {
+        flutterPluginBinding = null
+    }
 
-  override fun onDetachedFromActivity() {
-    channel.setMethodCallHandler(null)
-  }
+    override fun onAttachedToActivity(binding: ActivityPluginBinding) {
+        activity = binding.activity
+        lifecycle = (activity as LifecycleOwner).lifecycle
+        
+        // Enregistrer la factory une fois que nous avons l'activité et le lifecycle
+        flutterPluginBinding?.let { flutterBinding ->
+            flutterBinding.platformViewRegistry.registerViewFactory(
+                "ar_flutter_plugin_flutterflow",
+                ArViewFactory(
+                    messenger = flutterBinding.binaryMessenger,
+                    activity = activity!!,
+                    lifecycle = lifecycle!!
+                )
+            )
+        }
+    }
 
-  override fun onReattachedToActivityForConfigChanges(binding: ActivityPluginBinding) {
-    onAttachedToActivity(binding)
-  }
+    override fun onDetachedFromActivityForConfigChanges() {
+        activity = null
+        lifecycle = null
+    }
 
-  override fun onAttachedToActivity(binding: ActivityPluginBinding) {
-    this.flutterPluginBinding.platformViewRegistry.registerViewFactory(
-        "ar_flutter_plugin_flutterflow", AndroidARViewFactory(binding.activity, flutterPluginBinding.binaryMessenger))
-  }
+    override fun onReattachedToActivityForConfigChanges(binding: ActivityPluginBinding) {
+        activity = binding.activity
+        lifecycle = (activity as LifecycleOwner).lifecycle
+        
+        // Réenregistrer la factory après les changements de configuration
+        flutterPluginBinding?.let { flutterBinding ->
+            flutterBinding.platformViewRegistry.registerViewFactory(
+                "ar_flutter_plugin_flutterflow",
+                ArViewFactory(
+                    messenger = flutterBinding.binaryMessenger,
+                    activity = activity!!,
+                    lifecycle = lifecycle!!
+                )
+            )
+        }
+    }
 
-  override fun onDetachedFromActivityForConfigChanges() {
-    onDetachedFromActivity()
-  }
+    override fun onDetachedFromActivity() {
+        activity = null
+        lifecycle = null
+    }
 }
