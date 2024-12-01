@@ -171,11 +171,26 @@ class ArView(
     
 
     private suspend fun buildModelNode(nodeData: Map<String, Any>): ModelNode? {
-        var fileLocation = nodeData["uri"] as? String
-        
-        if (fileLocation != null && !fileLocation.startsWith("http://") && !fileLocation.startsWith("https://")) {
-            val loader = FlutterInjector.instance().flutterLoader()
-            fileLocation = loader.getLookupKeyForAsset(fileLocation)
+        var fileLocation = nodeData["uri"] as? String ?: return null
+        when (nodeData["type"] as Int) {
+                0 -> { // GLTF2 Model from Flutter asset folder
+                    // Get path to given Flutter asset
+                    val loader = FlutterInjector.instance().flutterLoader()
+                    fileLocation = loader.getLookupKeyForAsset(fileLocation)
+                }
+                1 -> { // GLB Model from the web
+                    fileLocation = fileLocation
+                }
+                2 -> { // fileSystemAppFolderGLB
+                    fileLocation = fileLocation
+                }
+                 3 -> { //fileSystemAppFolderGLTF2
+                    val documentsPath = viewContext.getApplicationInfo().dataDir
+                    val fileLocation = documentsPath + "/app_flutter/" + nodeData["uri"] as String
+                 }
+                else -> {
+                    return null
+                }
         }
         
         if (fileLocation == null) {
@@ -197,6 +212,7 @@ class ArView(
                     isPositionEditable = true
                     isRotationEditable = true
                     isScaleEditable = true
+                    name = nodeData["name"] as? String
                 }
             } ?: run {
                 null
@@ -481,7 +497,10 @@ class ArView(
                 val node = buildModelNode(nodeData)
                 if (node != null) {
                     sceneView.addChildNode(node)
-                    result.success(null)
+                    node.name?.let { nodeName ->
+                        nodesMap[nodeName] = node
+                    }
+                    result.success(true)
                 } else {
                     result.error("NODE_CREATION_FAILED", "Failed to create node", null)
                 }
@@ -500,11 +519,11 @@ class ArView(
                 result.error("INVALID_ARGUMENT", "Node ID is required", null)
                 return
             }
-
+            Log.d(TAG, "nodesMapContent: ${nodesMap.keys}   ")
             nodesMap[nodeId]?.let { node ->
                 sceneView.removeChildNode(node)
                 nodesMap.remove(nodeId)
-                result.success(null)
+                result.success(true)
             } ?: result.error("NODE_NOT_FOUND", "Node with ID $nodeId not found", null)
         } catch (e: Exception) {
             result.error("REMOVE_NODE_ERROR", e.message, null)
