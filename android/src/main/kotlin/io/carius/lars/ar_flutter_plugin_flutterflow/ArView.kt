@@ -9,6 +9,7 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.PixelCopy
+import android.view.ScaleGestureDetector
 import android.view.View
 import android.view.ViewGroup
 import android.widget.FrameLayout
@@ -31,6 +32,8 @@ import io.github.sceneview.ar.arcore.fps
 import io.github.sceneview.ar.node.AnchorNode
 import io.github.sceneview.ar.node.CloudAnchorNode
 import io.github.sceneview.ar.node.HitResultNode
+import io.github.sceneview.gesture.MoveGestureDetector
+import io.github.sceneview.gesture.RotateGestureDetector
 import io.github.sceneview.math.Position
 import io.github.sceneview.math.Transform
 import io.github.sceneview.model.ModelInstance
@@ -83,6 +86,8 @@ class ArView(
     private var lastPointCloudTimestamp: Long? = null
     private var lastPointCloudFrame: Frame? = null
     private var pointCloudModelInstances = mutableListOf<ModelInstance>()
+    private var handlePans = false  
+    private var handleRotation = false
 
     private class PointCloudNode(
         modelInstance: ModelInstance,
@@ -161,9 +166,6 @@ class ArView(
             }
         )
         
-        val gestureHandler = GestureHandler(sceneView, objectChannel)
-        sceneView.setOnTouchListener(gestureHandler)
-        
         rootLayout.addView(sceneView)
 
         sessionChannel.setMethodCallHandler(onSessionMethodCall)
@@ -203,18 +205,73 @@ class ArView(
         if (transformation == null) {
             return null
         }
-        // val transform = deserializeMatrix4(transformation)
 
         return try {
             sceneView.modelLoader.loadModelInstance(fileLocation)?.let { modelInstance ->
-                return ModelNode(
+                object : ModelNode(
                     modelInstance = modelInstance,
                     scaleToUnits = transformation.first().toFloat(),
-                ).apply {
-                    isEditable = true
-                    isPositionEditable = true
-                    isRotationEditable = true
-                    isScaleEditable = true
+                ) {
+                    override fun onMove(detector: MoveGestureDetector, e: MotionEvent): Boolean {
+                            if (handlePans) {
+                            val defaultResult = super.onMove(detector, e)
+                            objectChannel.invokeMethod("onPanChange", name)
+                            return defaultResult
+                            }
+                    return false
+                    }
+                    
+                    override fun onMoveBegin(detector: MoveGestureDetector, e: MotionEvent): Boolean {
+                        if (handlePans) {
+                            val defaultResult = super.onMoveBegin(detector, e)
+                            objectChannel.invokeMethod("onPanStart", name)
+                            defaultResult
+                        } 
+                        return false
+                    }
+                    
+                    override fun onMoveEnd(detector: MoveGestureDetector, e: MotionEvent) {
+                        if (handlePans) {
+                            super.onMoveEnd(detector, e)
+                            val transformMap = mapOf(
+                                "name" to name,
+                                "transform" to transform.toFloatArray().toList()
+                            )
+                            objectChannel.invokeMethod("onPanEnd", transformMap)
+                        }
+                    }
+
+                    override fun onRotateBegin(detector: RotateGestureDetector, e: MotionEvent): Boolean {
+                        if (handleRotation) {
+                            val defaultResult = super.onRotateBegin(detector, e)
+                            objectChannel.invokeMethod("onRotationStart", name)
+                            return defaultResult
+                        }
+                        return false
+                    }
+
+                    override fun onRotate(detector: RotateGestureDetector, e: MotionEvent): Boolean {
+                        if (handleRotation) {
+                            val defaultResult = super.onRotate(detector, e)
+                            objectChannel.invokeMethod("onRotationChange", name)
+                            return defaultResult
+                        }
+                        return false
+                    }
+
+                    override fun onRotateEnd(detector: RotateGestureDetector, e: MotionEvent) {
+                        if (handleRotation) {
+                            super.onRotateEnd(detector, e)
+                            val transformMap = mapOf(
+                                "name" to name,
+                                "transform" to transform.toFloatArray().toList()
+                            )
+                            objectChannel.invokeMethod("onRotationEnd", transformMap)
+                        }
+                    }
+                }.apply {
+                    isPositionEditable = handlePans
+                    isRotationEditable = handleRotation
                     name = nodeData["name"] as? String
                 }
             } ?: run {
@@ -305,8 +362,8 @@ class ArView(
             val customPlaneTexturePath = call.argument<String>("customPlaneTexturePath")
             val showWorldOrigin = call.argument<Boolean>("showWorldOrigin") ?: false
             val handleTaps = call.argument<Boolean>("handleTaps") ?: true
-            val handlePans = call.argument<Boolean>("handlePans") ?: false
-            val handleRotation = call.argument<Boolean>("handleRotation") ?: false
+            handlePans = call.argument<Boolean>("handlePans") ?: false
+            handleRotation = call.argument<Boolean>("handleRotation") ?: false
 
             sceneView.session?.let { session ->
                 session.configure(session.config.apply {
@@ -409,7 +466,7 @@ class ArView(
                 setOnGestureListener(
                     onSingleTapConfirmed = { motionEvent: MotionEvent, node: Node? ->
                         if (node != null) {
-                            var anchorName: String? = null
+                            /*var anchorName: String? = null
                             var currentNode: Node? = node
                             while (currentNode != null) {
                                 anchorNodesMap.forEach { (name, anchorNode) ->
@@ -422,7 +479,7 @@ class ArView(
                                 currentNode = currentNode.parent
                             }
                             objectChannel.invokeMethod("onNodeTap", listOf(anchorName))
-                            true
+                            true*/
                         } else {
                             session?.update()?.let { frame ->
                                 val hitResults = frame.hitTest(motionEvent)
