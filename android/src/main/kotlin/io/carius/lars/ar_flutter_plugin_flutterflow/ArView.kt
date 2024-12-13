@@ -304,6 +304,9 @@ class ArView(
                         buildModelNode(dict_node)?.let { node ->
                             anchorNode.addChildNode(node)
                             sceneView.addChildNode(anchorNode)
+                            node.name?.let { nodeName ->
+                                nodesMap[nodeName] = node
+                            }
                             result.success(true)
                         } ?: result.success(false)
                     } catch (e: Exception) {
@@ -590,56 +593,56 @@ class ArView(
     }
 
     private fun handleTransformNode(
-        call: MethodCall,
-        result: MethodChannel.Result,
-    ) {
-        try {
-                    val nodeId = call.argument<String>("nodeId")
-                    val position = call.argument<Map<String, Double>>("position")
-                    val rotation = call.argument<Map<String, Double>>("rotation")
-                    val scale = call.argument<Double>("scale")
+    call: MethodCall,
+    result: MethodChannel.Result,
+) {
+    try {
+        Log.d(TAG, "handleTransformNode called")
+        if (handlePans || handleRotation) {
+            val name = call.argument<String>("name")
+            val newTransformation: ArrayList<Double>? = call.argument<ArrayList<Double>>("transformation")
 
-                    if (nodeId == null) {
-                        result.error("INVALID_ARGUMENT", "Node ID is required", null)
+            if (name == null) {
+                result.error("INVALID_ARGUMENT", "Node name is required", null)
+                return
+            }
+            Log.d(TAG, "nodesMapContent: ${nodesMap.keys}   ")
+            nodesMap[name]?.let { node ->
+                newTransformation?.let { transform ->
+                    if (transform.size != 16) {
+                        result.error("INVALID_TRANSFORMATION", "Transformation must be a 4x4 matrix (16 values)", null)
                         return
                     }
 
-                    nodesMap[nodeId]?.let { node ->
-                        if (node is ModelNode) {
-                            val newPosition = position?.let {
-                                ScenePosition(
-                                    x = (it["x"] ?: 0.0).toFloat(),
-                                    y = (it["y"] ?: 0.0).toFloat(),
-                                    z = (it["z"] ?: 0.0).toFloat()
-                                )
-                            }
-
-                            val newRotation = rotation?.let {
-                                SceneRotation(
-                                    x = (it["x"] ?: 0.0).toFloat(),
-                                    y = (it["y"] ?: 0.0).toFloat(),
-                                    z = (it["z"] ?: 0.0).toFloat()
-                                )
-                            }
-
-                            val newScale = scale?.let {
-                                SceneScale(it.toFloat(), it.toFloat(), it.toFloat())
-                            }
-
-                            node.transform(
-                                position = newPosition ?: node.position,
-                                rotation = newRotation ?: node.rotation,
-                                scale = newScale ?: node.scale
+                    node.apply {
+                        transform(
+                            position = ScenePosition(
+                                x = transform[12].toFloat(),
+                                y = transform[13].toFloat(),
+                                z = transform[14].toFloat()
+                            ),
+                            rotation = SceneRotation(
+                                x = kotlin.math.atan2(transform[6].toFloat(), transform[10].toFloat()),
+                                y = kotlin.math.atan2(-transform[2].toFloat(), 
+                                    kotlin.math.sqrt(transform[6].toFloat() * transform[6].toFloat() + 
+                                    transform[10].toFloat() * transform[10].toFloat())),
+                                z = kotlin.math.atan2(transform[1].toFloat(), transform[0].toFloat())
+                            ),
+                            scale = SceneScale(
+                                x = kotlin.math.sqrt((transform[0] * transform[0] + transform[1] * transform[1] + transform[2] * transform[2]).toFloat()),
+                                y = kotlin.math.sqrt((transform[4] * transform[4] + transform[5] * transform[5] + transform[6] * transform[6]).toFloat()),
+                                z = kotlin.math.sqrt((transform[8] * transform[8] + transform[9] * transform[9] + transform[10] * transform[10]).toFloat())
                             )
-                            result.success(null)
-                        } else {
-                            result.error("INVALID_NODE_TYPE", "Node is not a ModelNode", null)
-                        }
-                    } ?: result.error("NODE_NOT_FOUND", "Node with ID $nodeId not found", null)
-                } catch (e: Exception) {
-                    result.error("TRANSFORM_NODE_ERROR", e.message, null)
-                }
+                        )
+                    }
+                    result.success(null)
+                } ?: result.error("INVALID_TRANSFORMATION", "Transformation is required", null)
+            } ?: result.error("NODE_NOT_FOUND", "Node with name $name not found", null)
+        }
+    } catch (e: Exception) {
+        result.error("TRANSFORM_NODE_ERROR", e.message, null)
     }
+}
 
     private fun handleHostCloudAnchor(
         call: MethodCall,
