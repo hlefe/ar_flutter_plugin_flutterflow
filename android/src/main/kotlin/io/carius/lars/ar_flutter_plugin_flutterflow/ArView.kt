@@ -56,6 +56,7 @@ import io.github.sceneview.math.Rotation
 import io.github.sceneview.math.Scale
 import io.github.sceneview.math.colorOf
 import io.github.sceneview.loaders.MaterialLoader
+import com.google.ar.core.exceptions.SessionPausedException
 
 class ArView(
     context: Context,
@@ -88,6 +89,7 @@ class ArView(
     private var pointCloudModelInstances = mutableListOf<ModelInstance>()
     private var handlePans = false  
     private var handleRotation = false
+    private var isSessionPaused = false
 
     private class PointCloudNode(
         modelInstance: ModelInstance,
@@ -104,16 +106,29 @@ class ArView(
                 "getAnchorPose" -> handleGetAnchorPose(call, result)
                 "getCameraPose" -> handleGetCameraPose(result)
                 "snapshot" -> handleSnapshot(result)
-                "disableCamera" -> {
-                    result.success(null)
-                }
-                "enableCamera" -> {
-                    result.success(null)
-                }
+                "disableCamera" -> handleDisableCamera(result)
+                "enableCamera" -> handleEnableCamera(result)
                 else -> result.notImplemented()
             }
         }
-
+    private fun handleDisableCamera(result: MethodChannel.Result) {
+        try {
+            isSessionPaused = true
+            sceneView.session?.pause()
+            result.success(null)
+        } catch (e: Exception) {
+            result.error("DISABLE_CAMERA_ERROR", e.message, null)
+        }
+    }
+    private fun handleEnableCamera(result: MethodChannel.Result) {
+        try {
+            isSessionPaused = false
+            sceneView.session?.resume()
+            result.success(null)
+        } catch (e: Exception) {
+            result.error("ENABLE_CAMERA_ERROR", e.message, null)
+        }
+    }
     private val onObjectMethodCall =
         MethodChannel.MethodCallHandler { call, result ->
             when (call.method) {
@@ -408,59 +423,74 @@ class ArView(
                 }
 
                 onFrame = { frameTime ->
-                    session?.update()?.let { frame ->
-                        if (showAnimatedGuide) {
-                            frame.getUpdatedTrackables(Plane::class.java).forEach { plane ->
-                                if (plane.trackingState == TrackingState.TRACKING) {
-                                    rootLayout.findViewWithTag<View>("hand_motion_layout")?.let { handMotionLayout ->
-                                        rootLayout.removeView(handMotionLayout)
-                                        showAnimatedGuide = false
+                    try {
+                        if (!isSessionPaused) {
+                            session?.update()?.let { frame ->
+                                if (showAnimatedGuide) {
+                                    frame.getUpdatedTrackables(Plane::class.java).forEach { plane ->
+                                        if (plane.trackingState == TrackingState.TRACKING) {
+                                            rootLayout.findViewWithTag<View>("hand_motion_layout")?.let { handMotionLayout ->
+                                                rootLayout.removeView(handMotionLayout)
+                                                showAnimatedGuide = false
+                                            }
+                                        }
+                                    }
+                                }
+
+                                if (showFeaturePoints) {
+                                    val currentFps = frame.fps(lastPointCloudFrame)
+                                    if (currentFps < 10) {
+                                        frame.acquirePointCloud()?.let { pointCloud ->
+                                            if (pointCloud.timestamp != lastPointCloudTimestamp) {
+                                                lastPointCloudFrame = frame
+                                                lastPointCloudTimestamp = pointCloud.timestamp
+
+                                                val pointsSize = pointCloud.ids?.limit() ?: 0
+
+                                                if (pointCloudNodes.isNotEmpty()) {
+                                                }
+                                                pointCloudNodes.toList().forEach { removePointCloudNode(it) }
+
+                                                val pointsBuffer = pointCloud.points
+                                                for (index in 0 until pointsSize) {
+                                                    val pointIndex = index * 4
+                                                    val position =
+                                                        Position(
+                                                            pointsBuffer[pointIndex],
+                                                            pointsBuffer[pointIndex + 1],
+                                                            pointsBuffer[pointIndex + 2],
+                                                        )
+                                                    val confidence = pointsBuffer[pointIndex + 3]
+                                                    addPointCloudNode(index, position, confidence)
+                                                }
+
+                                                pointCloud.release()
+                                            }
+                                        }
+                                    }
+                                }
+
+                                frame.getUpdatedTrackables(Plane::class.java).forEach { plane ->
+                                    if (plane.trackingState == TrackingState.TRACKING &&
+                                        !detectedPlanes.contains(plane)
+                                    ) {
+                                        detectedPlanes.add(plane)
+                                        mainScope.launch {
+                                            sessionChannel.invokeMethod("onPlaneDetected", detectedPlanes.size)
+                                        }
                                     }
                                 }
                             }
                         }
-
-                        if (showFeaturePoints) {
-                            val currentFps = frame.fps(lastPointCloudFrame)
-                            if (currentFps < 10) {
-                                frame.acquirePointCloud()?.let { pointCloud ->
-                                    if (pointCloud.timestamp != lastPointCloudTimestamp) {
-                                        lastPointCloudFrame = frame
-                                        lastPointCloudTimestamp = pointCloud.timestamp
-
-                                        val pointsSize = pointCloud.ids?.limit() ?: 0
-
-                                        if (pointCloudNodes.isNotEmpty()) {
-                                        }
-                                        pointCloudNodes.toList().forEach { removePointCloudNode(it) }
-
-                                        val pointsBuffer = pointCloud.points
-                                        for (index in 0 until pointsSize) {
-                                            val pointIndex = index * 4
-                                            val position =
-                                                Position(
-                                                    pointsBuffer[pointIndex],
-                                                    pointsBuffer[pointIndex + 1],
-                                                    pointsBuffer[pointIndex + 2],
-                                                )
-                                            val confidence = pointsBuffer[pointIndex + 3]
-                                            addPointCloudNode(index, position, confidence)
-                                        }
-
-                                        pointCloud.release()
-                                    }
-                                }
+                    } catch (e: Exception) {
+                        when (e) {
+                            is SessionPausedException -> {
+                                // Ignorer silencieusement cette exception quand la session est en pause
+                                Log.d(TAG, "Session paused, skipping frame update")
                             }
-                        }
-
-                        frame.getUpdatedTrackables(Plane::class.java).forEach { plane ->
-                            if (plane.trackingState == TrackingState.TRACKING &&
-                                !detectedPlanes.contains(plane)
-                            ) {
-                                detectedPlanes.add(plane)
-                                mainScope.launch {
-                                    sessionChannel.invokeMethod("onPlaneDetected", detectedPlanes.size)
-                                }
+                            else -> {
+                                Log.e(TAG, "Error during frame update", e)
+                                e.printStackTrace()
                             }
                         }
                     }
@@ -597,7 +627,6 @@ class ArView(
     result: MethodChannel.Result,
 ) {
     try {
-        Log.d(TAG, "handleTransformNode called")
         if (handlePans || handleRotation) {
             val name = call.argument<String>("name")
             val newTransformation: ArrayList<Double>? = call.argument<ArrayList<Double>>("transformation")
@@ -606,7 +635,6 @@ class ArView(
                 result.error("INVALID_ARGUMENT", "Node name is required", null)
                 return
             }
-            Log.d(TAG, "nodesMapContent: ${nodesMap.keys}   ")
             nodesMap[name]?.let { node ->
                 newTransformation?.let { transform ->
                     if (transform.size != 16) {
