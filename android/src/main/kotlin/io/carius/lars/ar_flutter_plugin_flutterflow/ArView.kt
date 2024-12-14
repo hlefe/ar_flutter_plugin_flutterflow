@@ -141,8 +141,7 @@ class ArView(
                 "addNodeToPlaneAnchor" -> handleAddNodeToPlaneAnchor(call, result)
                 "addNodeToScreenPosition" -> handleAddNodeToScreenPosition(call, result)
                 "removeNode" -> {
-                    val nodeName = call.argument<String>("name")
-                    handleRemoveNode(nodeName, result)
+                    handleRemoveNode(call, result)
                 }
                 "transformationChanged" -> {
                     handleTransformNode(call, result)
@@ -603,21 +602,39 @@ class ArView(
     }
 
     private fun handleRemoveNode(
-        nodeId: String?,
+        call: MethodCall,
         result: MethodChannel.Result,
     ) {
         try {
-            if (nodeId == null) {
-                result.error("INVALID_ARGUMENT", "Node ID is required", null)
+            val nodeData = call.arguments as? Map<String, Any>
+            val nodeName = nodeData?.get("name") as? String
+            
+            if (nodeName == null) {
+                result.error("INVALID_ARGUMENT", "Node name is required", null)
                 return
             }
-            Log.d(TAG, "nodesMapContent: ${nodesMap.keys}   ")
-            nodesMap[nodeId]?.let { node ->
+            
+            Log.d(TAG, "Attempting to remove node with name: $nodeName")
+            Log.d(TAG, "Current nodes in map: ${nodesMap.keys}")
+            
+            nodesMap[nodeName]?.let { node ->
+                // Détacher d'abord le nœud de son parent s'il en a un
+                node.parent?.removeChildNode(node)
+                // Puis le retirer de la scène principale
                 sceneView.removeChildNode(node)
-                nodesMap.remove(nodeId)
-                result.success(true)
-            } ?: result.error("NODE_NOT_FOUND", "Node with ID $nodeId not found", null)
+                // Nettoyer les ressources du nœud
+                node.destroy()
+                // Enfin le retirer de notre Map
+                nodesMap.remove(nodeName)
+                
+                Log.d(TAG, "Node removed successfully and destroyed")
+                result.success(nodeName)
+            } ?: run {
+                Log.e(TAG, "Node not found in nodesMap")
+                result.error("NODE_NOT_FOUND", "Node with name $nodeName not found", null)
+            }
         } catch (e: Exception) {
+            Log.e(TAG, "Error removing node", e)
             result.error("REMOVE_NODE_ERROR", e.message, null)
         }
     }
