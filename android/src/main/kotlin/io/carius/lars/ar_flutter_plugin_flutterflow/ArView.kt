@@ -498,7 +498,7 @@ class ArView(
                 setOnGestureListener(
                     onSingleTapConfirmed = { motionEvent: MotionEvent, node: Node? ->
                         if (node != null) {
-                            /*var anchorName: String? = null
+                            var anchorName: String? = null
                             var currentNode: Node? = node
                             while (currentNode != null) {
                                 anchorNodesMap.forEach { (name, anchorNode) ->
@@ -510,8 +510,10 @@ class ArView(
                                 if (anchorName != null) break
                                 currentNode = currentNode.parent
                             }
-                            objectChannel.invokeMethod("onNodeTap", listOf(anchorName))
-                            true*/
+                            if(handleTaps) {
+                                objectChannel.invokeMethod("onNodeTap", listOf(anchorName))
+                            }
+                            true
                         } else {
                             session?.update()?.let { frame ->
                                 val hitResults = frame.hitTest(motionEvent)
@@ -992,12 +994,6 @@ class ArView(
         sceneView.destroy()
         pointCloudNodes.toList().forEach { removePointCloudNode(it) }
         pointCloudModelInstances.clear()
-    }
-
-    private fun notifyNodeTap(nodeName: String?) {
-        mainScope.launch {
-            objectChannel.invokeMethod("onNodeTap", listOf(nodeName))
-        }
     }
 
     private fun notifyError(error: String) {
