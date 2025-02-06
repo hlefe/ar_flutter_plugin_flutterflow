@@ -159,8 +159,8 @@ class ArView(
                     handleRemoveAnchor(anchorName, result)
                 }
                 "initGoogleCloudAnchorMode" -> handleInitGoogleCloudAnchorMode(result)
-                "uploadAnchor" -> {}
-                "downloadAnchor" -> {}
+                "uploadAnchor" -> handleUploadAnchor(call, result)
+                "downloadAnchor" -> handleDownloadAnchor(call, result)
                 else -> result.notImplemented()
             }
         }
@@ -974,12 +974,166 @@ class ArView(
 
     private fun handleInitGoogleCloudAnchorMode(result: MethodChannel.Result) {
         try {
-            sceneView.configureSession { session, config ->
-                config.cloudAnchorMode = Config.CloudAnchorMode.ENABLED
+            Log.d(TAG, "🔄 Initialisation du mode Cloud Anchor...")
+            sceneView.session?.let { session ->
+                session.configure(session.config.apply {
+                    cloudAnchorMode = Config.CloudAnchorMode.ENABLED
+                })
             }
             result.success(null)
         } catch (e: Exception) {
+            Log.e(TAG, "❌ Erreur lors de l'initialisation du mode Cloud Anchor", e)
+            mainScope.launch {
+                sessionChannel.invokeMethod("onError", listOf("Error initializing cloud anchor mode: ${e.message}"))
+            }
             result.error("CLOUD_ANCHOR_INIT_ERROR", e.message, null)
+        }
+    }
+
+    private fun handleUploadAnchor(call: MethodCall, result: MethodChannel.Result) {
+        try {
+            val anchorName = call.argument<String>("name")
+            Log.d(TAG, "⚓ Début de l'upload de l'ancre: $anchorName")
+            
+            // Vérifier si le mode Cloud Anchor est initialisé
+            val session = sceneView.session
+            if (session == null) {
+                Log.e(TAG, "❌ Erreur: session AR non disponible")
+                result.error("SESSION_ERROR", "AR Session is not available", null)
+                return
+            }
+
+            // Vérifier et initialiser le mode Cloud Anchor si nécessaire
+            Log.d(TAG, "🔄 Vérification de la configuration Cloud Anchor...")
+            try {
+                sceneView.configureSession { session, config ->
+                    config.cloudAnchorMode = Config.CloudAnchorMode.ENABLED
+                    config.updateMode = Config.UpdateMode.LATEST_CAMERA_IMAGE
+                }
+                Log.d(TAG, "✅ Mode Cloud Anchor configuré avec succès")
+            } catch (e: Exception) {
+                Log.e(TAG, "❌ Erreur lors de la configuration du mode Cloud Anchor", e)
+                result.error("CLOUD_ANCHOR_CONFIG_ERROR", e.message, null)
+                return
+            }
+
+            // Continuer avec le reste du code existant...
+            if (anchorName == null) {
+                Log.e(TAG, "❌ Erreur: nom de l'ancre manquant")
+                result.error("INVALID_ARGUMENT", "Anchor name is required", null)
+                return
+            }
+
+            Log.d(TAG, "📱 Vérification de la capacité à héberger l'ancre cloud...")
+            if (!session.canHostCloudAnchor(sceneView.cameraNode)) {
+                Log.e(TAG, "❌ Erreur: données visuelles insuffisantes pour héberger l'ancre cloud")
+                result.error("HOSTING_ERROR", "Insufficient visual data to host", null)
+                return
+            }
+
+            val anchorNode = anchorNodesMap[anchorName]
+            if (anchorNode == null) {
+                Log.e(TAG, "❌ Erreur: ancre non trouvée: $anchorName")
+                Log.d(TAG, "📍 Ancres disponibles: ${anchorNodesMap.keys}")
+                result.error("ANCHOR_NOT_FOUND", "Anchor not found: $anchorName", null)
+                return
+            }
+
+            Log.d(TAG, "🔄 Création du CloudAnchorNode...")
+            val cloudAnchorNode = CloudAnchorNode(sceneView.engine, anchorNode.anchor!!)
+            
+            Log.d(TAG, "☁️ Début de l'hébergement de l'ancre cloud...")
+            cloudAnchorNode.host(session) { cloudAnchorId, state ->
+                Log.d(TAG, "📡 État de l'hébergement: $state, ID: $cloudAnchorId")
+                mainScope.launch {
+                    if (state == CloudAnchorState.SUCCESS && cloudAnchorId != null) {
+                        Log.d(TAG, "✅ Ancre cloud hébergée avec succès: $cloudAnchorId")
+                        val args = mapOf(
+                            "name" to anchorName,
+                            "cloudanchorid" to cloudAnchorId
+                        )
+                        anchorChannel.invokeMethod("onCloudAnchorUploaded", args)
+                        result.success(true)
+                    } else {
+                        Log.e(TAG, "❌ Échec de l'hébergement de l'ancre cloud: $state")
+                        sessionChannel.invokeMethod("onError", listOf("Failed to host cloud anchor: $state"))
+                        result.error("HOSTING_ERROR", "Failed to host cloud anchor: $state", null)
+                    }
+                }
+            }
+            
+            Log.d(TAG, "➕ Ajout du CloudAnchorNode à la scène...")
+            sceneView.addChildNode(cloudAnchorNode)
+            
+        } catch (e: Exception) {
+            Log.e(TAG, "❌ Exception lors de l'upload de l'ancre", e)
+            Log.e(TAG, "Stack trace:", e)
+            result.error("UPLOAD_ANCHOR_ERROR", e.message, null)
+        }
+    }
+
+    private fun handleDownloadAnchor(call: MethodCall, result: MethodChannel.Result) {
+        try {
+            val cloudAnchorId = call.argument<String>("cloudanchorid")
+            if (cloudAnchorId == null) {
+                mainScope.launch {
+                    sessionChannel.invokeMethod("onError", listOf("Cloud Anchor ID is required"))
+                }
+                result.error("INVALID_ARGUMENT", "Cloud Anchor ID is required", null)
+                return
+            }
+
+            val session = sceneView.session
+            if (session == null) {
+                mainScope.launch {
+                    sessionChannel.invokeMethod("onError", listOf("AR Session is not available"))
+                }
+                result.error("SESSION_ERROR", "AR Session is not available", null)
+                return
+            }
+
+            CloudAnchorNode.resolve(
+                sceneView.engine,
+                session,
+                cloudAnchorId
+            ) { state, node ->
+                mainScope.launch {
+                    if (!state.isError && node != null) {
+                        sceneView.addChildNode(node)
+                        val anchorData = mapOf(
+                            "type" to 0,
+                            "cloudanchorid" to cloudAnchorId
+                        )
+                        anchorChannel.invokeMethod(
+                            "onAnchorDownloadSuccess",
+                            anchorData,
+                            object : MethodChannel.Result {
+                                override fun success(result: Any?) {
+                                    val anchorName = result.toString()
+                                    anchorNodesMap[anchorName] = node
+                                }
+
+                                override fun error(errorCode: String, errorMessage: String?, errorDetails: Any?) {
+                                    sessionChannel.invokeMethod("onError", listOf("Error registering downloaded anchor: $errorMessage"))
+                                }
+
+                                override fun notImplemented() {
+                                    sessionChannel.invokeMethod("onError", listOf("Error registering downloaded anchor: not implemented"))
+                                }
+                            }
+                        )
+                        result.success(true)
+                    } else {
+                        sessionChannel.invokeMethod("onError", listOf("Failed to resolve cloud anchor: $state"))
+                        result.error("RESOLVE_ERROR", "Failed to resolve cloud anchor: $state", null)
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            mainScope.launch {
+                sessionChannel.invokeMethod("onError", listOf("Error downloading anchor: ${e.message}"))
+            }
+            result.error("DOWNLOAD_ANCHOR_ERROR", e.message, null)
         }
     }
 
