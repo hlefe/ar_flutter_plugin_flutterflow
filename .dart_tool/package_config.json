@@ -266,13 +266,13 @@
       "languageVersion": "3.4"
     },
     {
-      "name": "ar_flutter_plugin_flutterflow",
+      "name": "ar_flutter_plugin_2",
       "rootUri": "../",
       "packageUri": "lib/",
       "languageVersion": "2.16"
     }
   ],
-  "generated": "2024-10-28T17:59:51.282551Z",
+  "generated": "2025-02-06T14:12:47.740655Z",
   "generator": "pub",
   "generatorVersion": "3.5.3",
   "flutterRoot": "file:///Users/hugolefevre/flutter",

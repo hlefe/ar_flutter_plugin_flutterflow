@@ -1,4 +1,4 @@
-package io.carius.lars.ar_flutter_plugin_flutterflow
+package com.uhg0.ar_flutter_plugin_2
 
 import android.app.Activity
 import androidx.lifecycle.Lifecycle
@@ -27,7 +27,7 @@ class ArFlutterPlugin: FlutterPlugin, ActivityAware {
         // Enregistrer la factory une fois que nous avons l'activité et le lifecycle
         flutterPluginBinding?.let { flutterBinding ->
             flutterBinding.platformViewRegistry.registerViewFactory(
-                "ar_flutter_plugin_flutterflow",
+                "ar_flutter_plugin_2",
                 ArViewFactory(
                     messenger = flutterBinding.binaryMessenger,
                     activity = activity!!,
@@ -49,7 +49,7 @@ class ArFlutterPlugin: FlutterPlugin, ActivityAware {
         // Réenregistrer la factory après les changements de configuration
         flutterPluginBinding?.let { flutterBinding ->
             flutterBinding.platformViewRegistry.registerViewFactory(
-                "ar_flutter_plugin_flutterflow",
+                "ar_flutter_plugin_2",
                 ArViewFactory(
                     messenger = flutterBinding.binaryMessenger,
                     activity = activity!!,

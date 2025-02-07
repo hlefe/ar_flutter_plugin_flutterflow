@@ -1,9 +1,9 @@
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:ar_flutter_plugin_flutterflow/ar_flutter_plugin.dart';
+import 'package:ar_flutter_plugin_2/ar_flutter_plugin.dart';
 
 void main() {
-  const MethodChannel channel = MethodChannel('ar_flutter_plugin_flutterflow');
+  const MethodChannel channel = MethodChannel('ar_flutter_plugin_2');
 
   TestWidgetsFlutterBinding.ensureInitialized();
 

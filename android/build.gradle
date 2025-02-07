@@ -1,4 +1,4 @@
-group 'io.carius.lars.ar_flutter_plugin_flutterflow'
+group 'com.uhg0.ar_flutter_plugin_2'
 version '1.0-SNAPSHOT'
 
 buildscript {
@@ -28,7 +28,7 @@ apply plugin: 'kotlin-android'
 
 android {
     compileSdk 34
-    namespace 'io.carius.lars.ar_flutter_plugin_flutterflow'
+    namespace 'com.uhg0.ar_flutter_plugin_2'
 
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_17
@@ -51,13 +51,48 @@ android {
     buildFeatures {
         viewBinding true
     }
+
+    configurations.all {
+        resolutionStrategy {
+            force 'androidx.lifecycle:lifecycle-livedata-core:2.4.1'
+            force 'androidx.lifecycle:lifecycle-runtime:2.4.1'
+            force 'androidx.lifecycle:lifecycle-common:2.4.1'
+            force 'androidx.lifecycle:lifecycle-viewmodel:2.4.1'
+            
+            eachDependency { details ->
+                if (details.requested.group == 'androidx.lifecycle') {
+                    if (details.requested.name == 'lifecycle-runtime-compose') {
+                        details.useVersion "2.4.1"
+                    } else {
+                        details.useVersion "2.4.1"
+                    }
+                }
+            }
+        }
+    }
+
+    dexOptions {
+        javaMaxHeapSize "4g"
+        preDexLibraries = false
+    }
 }
 
 dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
-    implementation 'io.github.sceneview:arsceneview:2.2.0'
+    implementation('io.github.sceneview:arsceneview:2.2.0') {
+        exclude group: 'androidx.lifecycle'
+    }
     implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
     implementation 'io.flutter:flutter_embedding_debug:1.0.0-3316dd8728419ad3534e3f6112aa6291f587078a'
     implementation 'androidx.core:core-ktx:1.9.0'
     implementation 'androidx.appcompat:appcompat:1.6.1'
+    
+    implementation 'androidx.lifecycle:lifecycle-livedata-core:2.4.1'
+    implementation 'androidx.lifecycle:lifecycle-runtime:2.4.1'
+    implementation 'androidx.lifecycle:lifecycle-common:2.4.1'
+    implementation 'androidx.lifecycle:lifecycle-viewmodel:2.4.1'
+    
+    configurations {
+        all*.exclude group: 'androidx.lifecycle', module: 'lifecycle-runtime-compose'
+    }
 }

@@ -1,4 +1,4 @@
-package io.carius.lars.ar_flutter_plugin_flutterflow
+package com.uhg0.ar_flutter_plugin_2
 
 import android.content.Context
 import android.util.AttributeSet

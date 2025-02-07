@@ -1,4 +1,4 @@
-package io.carius.lars.ar_flutter_plugin_flutterflow.Serialization
+package com.uhg0.ar_flutter_plugin_2.Serialization
 
 import io.github.sceneview.math.Position as ScenePosition
 import io.github.sceneview.math.Rotation as SceneRotation

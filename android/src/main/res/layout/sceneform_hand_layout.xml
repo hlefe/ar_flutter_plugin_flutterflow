@@ -6,7 +6,7 @@
     android:layout_gravity="center"
     android:padding="32dp">
 
-    <io.carius.lars.ar_flutter_plugin_flutterflow.HandMotionView
+    <com.uhg0.ar_flutter_plugin_2.HandMotionView
         android:id="@+id/hand_motion_view"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
