@@ -1,4 +1,8 @@
 # Changelog
+## 0.7.56
+* Package discontinued due to the creation of a new plugin which use scenview_android instead of sceneform for the android part.
+* The new plugin is called ar_flutter_plugin_2 and can be found here: https://pub.dev/packages/ar_flutter_plugin_2
+
 ## 0.7.55
 * Updated ARCoreNanoPbUpdated to version 1.46.0.2, resolving a conflict with GTMSessionFetcher.
 

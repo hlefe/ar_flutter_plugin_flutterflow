@@ -1,6 +1,9 @@
 # ar_flutter_plugin_flutterflow
 [![pub package](https://img.shields.io/pub/v/ar_flutter_plugin_flutterflow.svg)](https://pub.dev/packages/ar_flutter_plugin_flutterflow)
 
+## Package discontinued
+This package is discontinued due to the creation of a new plugin which use scenview_android instead of sceneform for the android part.
+The new plugin is called ar_flutter_plugin_2 and can be found here: https://pub.dev/packages/ar_flutter_plugin_2
 
 
 This version is a direct adaptation of the original ar_flutter_plugin (https://pub.dev/packages/ar_flutter_plugin), maintaining all its powerful features and capabilities.
@@ -34,7 +37,7 @@ Or manually add this to your `pubspec.yaml` file (and run `flutter pub get`):
 
 ```yaml
 dependencies:
-  ar_flutter_plugin_flutterflow: ^0.7.55
+  ar_flutter_plugin_flutterflow: ^0.7.56
 ```
 
 Or in FlutterFlow : 
@@ -43,7 +46,7 @@ Or in FlutterFlow :
 <td>
 <img src="https://avatars.githubusercontent.com/u/74943865?s=48&amp;v=4" width="30" height="30" style="max-width: 100%; margin-bottom: -9px;"> </img>
 </td>
-<td> Simply add : <br> <b>ar_flutter_plugin_flutterflow: ^0.7.55 </b> <br> in pubspecs dependencies of your widget.
+<td> Simply add : <br> <b>ar_flutter_plugin_flutterflow: ^0.7.56 </b> <br> in pubspecs dependencies of your widget.
 </td>
 </table>
 
