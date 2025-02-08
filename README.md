@@ -3,7 +3,9 @@
 
 ## ⚠️ Package discontinued
 This package is discontinued due to the creation of a new plugin which use [Sceneview](https://github.com/SceneView/sceneview-android) instead of sceneform for the android part.
-The new plugin is called ar_flutter_plugin_2 and can be found here: https://pub.dev/packages/ar_flutter_plugin_2
+<br> The new plugin is called ar_flutter_plugin_2 and can be found here: <br>
+<b> - Pub.dev :</b> https://pub.dev/packages/ar_flutter_plugin_2<br>
+<b> - Github :</b> https://github.com/hlefe/ar_flutter_plugin_2<br>
 
 ---
 
