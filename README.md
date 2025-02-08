@@ -1,8 +1,7 @@
 # ar_flutter_plugin_flutterflow
-[![pub package](https://img.shields.io/pub/v/ar_flutter_plugin_flutterflow.svg)](https://pub.dev/packages/ar_flutter_plugin_flutterflow)
+![status: inactive](https://img.shields.io/badge/status-inactive-red.svg)
 
 ## ⚠️ Package discontinued
-![status: inactive](https://img.shields.io/badge/status-inactive-red.svg)
 This package is discontinued due to the creation of a new plugin which use [Sceneview](https://github.com/SceneView/sceneview-android) instead of sceneform for the android part.
 The new plugin is called ar_flutter_plugin_2 and can be found here: https://pub.dev/packages/ar_flutter_plugin_2
 
