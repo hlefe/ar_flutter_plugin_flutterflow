@@ -1,10 +1,10 @@
 # ar_flutter_plugin_flutterflow
 [![pub package](https://img.shields.io/pub/v/ar_flutter_plugin_flutterflow.svg)](https://pub.dev/packages/ar_flutter_plugin_flutterflow)
-
-## Package discontinued
+<table style="background-color:rgb(245, 211, 178); padding: 10px; border-radius: 5px;">
+## ⚠️ Package discontinued
 This package is discontinued due to the creation of a new plugin which use scenview_android instead of sceneform for the android part.
 The new plugin is called ar_flutter_plugin_2 and can be found here: https://pub.dev/packages/ar_flutter_plugin_2
-
+</table>
 
 This version is a direct adaptation of the original ar_flutter_plugin (https://pub.dev/packages/ar_flutter_plugin), maintaining all its powerful features and capabilities.
 This fork was created because the original plugin had not been updated since 2022. <br><br>
